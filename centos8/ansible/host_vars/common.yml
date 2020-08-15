@@ -1,0 +1,137 @@
+# Apache settings ######################################################################################################
+apache_create_vhosts: "true"
+apache_enablerepo: "epel"
+apache_group: "apache"
+apache_group_id: "48"
+apache_listen_ip: "*"
+apache_packages_state: "latest"
+apache_remove_default_vhost: "true"
+apache_state: "stopped"
+apache_vhosts:
+  - servername: "null"
+    serveralias: "*"
+    documentroot: "{{ server_document_root }}"
+    extra_parameters: |
+      RewriteCond %{HTTP_HOST} !^www\. [NC]
+      RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+apache_vhosts_ssl:
+  - servername: "null"
+    serveralias: "*"
+    documentroot: "{{ server_document_root }}"
+    certificate_file: "/etc/ssl/dev.crt"
+    certificate_key_file: "/etc/ssl/dev.pem"
+    extra_parameters: |
+      RewriteCond %{HTTP_HOST} !^www\. [NC]
+      RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# MySQL settings #######################################################################################################
+mysql_user_home: "/root"
+mysql_user_name: "root"
+mysql_user_password: "root"
+mysql_user_password_update: "yes"
+mysql_root_home: "/root"
+mysql_root_username: "root"
+mysql_root_password: "root"
+overwrite_global_mycnf: "yes"
+
+# NFS settings #########################################################################################################
+nfs_exports:
+  - "# see https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/s1-nfs-server-config-exports"
+  - "# see https://linux.die.net/man/5/exports"
+  - "# *               - anyone on the network can access this share"
+  - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
+  - "{{ server_document_root }}    *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)"
+
+# nginx settings #########################################################################################################
+nginx_remove_default_vhost: "true"
+
+# NodeJS settings ######################################################################################################
+npm_config_prefix: "/usr"
+nodejs_install_npm_user: "root"
+nodejs_npm_global_packages:
+  - "diff-so-fancy"
+  - "rome"
+  - "sass"
+  - "uglifycss"
+  - "uglify-js"
+  - "webpack"
+  - "yarn"
+
+# PHP settings #########################################################################################################
+php_date_timezone: "{{ server_timezone }}"
+php_disable_functions:
+  - "pcntl_alarm"
+  - "pcntl_fork"
+  - "pcntl_waitpid"
+  - "pcntl_wait"
+  - "pcntl_wifexited"
+  - "pcntl_wifstopped"
+  - "pcntl_wifsignaled"
+  - "pcntl_wexitstatus"
+  - "pcntl_wtermsig"
+  - "pcntl_wstopsig"
+  - "pcntl_signal_dispatch"
+  - "pcntl_get_last_error"
+  - "pcntl_strerror"
+  - "pcntl_sigprocmask"
+  - "pcntl_sigwaitinfo"
+  - "pcntl_sigtimedwait"
+  - "pcntl_exec"
+  - "pcntl_getpriority"
+  - "pcntl_setpriority"
+php_enablerepo: "epel"
+php_enable_php_fpm: "false"
+php_html_errors: "false"
+php_memcached_package: "php-memcached"
+php_memory_limit: "2048M"
+php_mysql_package: "php-mysql"
+php_opcache_load_comments: "1"
+php_opcache_save_comments: "1"
+php_packages:
+  - "php"
+  - "php-apcu"
+  - "php-cli"
+  - "php-common"
+  - "php-curl"
+  - "php-devel"
+  - "php-gd"
+  - "php-intl"
+  - "php-json"
+  - "php-ldap"
+  - "php-mbstring"
+  - "php-opcache"
+  - "php-pear"
+  - "php-pecl-apcu"
+  - "php-pecl-igbinary"
+  - "php-pecl-imagick"
+  - "php-pecl-msgpack"
+  - "php-pspell"
+  - "php-soap"
+  - "php-readline"
+  - "php-xml"
+  - "php-xsl"
+php_post_max_size: "51M"
+php_session_gc_maxlifetime: "2592000"
+php_session_gc_probability: "1"
+php_upload_max_filesize: "50M"
+php_variables_order: "EGPCS"
+php_version: "7.4"
+php_webserver_daemon: "httpd"
+php_xdebug_idekey: "xdebug.ide"
+php_xdebug_remote_autostart: "true"
+php_xdebug_remote_connect_back: "true"
+php_xdebug_remote_enable: "true"
+php_xdebug_remote_log: "/var/log/xdebug-remote.log"
+php_xdebug_remote_port: "9000"
+
+# Server settings ######################################################################################################
+server_cgi_root: "/var/www/cgi-bin"
+server_document_root: "/var/www"
+server_timezone: "America/Vancouver"
+server_users:
+  - { user: "vagrant", pass: "vagrant" }
+
+# Varnish settings #####################################################################################################
+varnish_default_backend_host: "127.0.0.1"
+varnish_default_backend_port: "80"
+varnish_listen_port: "8080"

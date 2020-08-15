@@ -1,0 +1,6 @@
+**/builds/**
+!**/builds/.gitkeep
+**/iso/**
+!**/iso/.gitkeep
+packer_cache
+.idea/
