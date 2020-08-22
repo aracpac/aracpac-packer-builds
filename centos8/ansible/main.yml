@@ -1,5 +1,5 @@
 # Run locally like:
-#   ansible-playbook --connection=local --inventory 127.0.0.1, main.yml
+#   ansible-playbook -c local -i localhost, main.yml
 
 ########################################################################################################################
 # Prepare the server by adding any files and configuration that are expected by later steps ############################
@@ -99,40 +99,40 @@
     - "geerlingguy.repo-epel"
     - "geerlingguy.repo-remi"
   tasks:
-  # See the default CentOS 8 package list at http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/
-  - name: "installing packages from package manager"
-    dnf:
-      name:
-        - "acl"
-        - "aide"
-        - "atop"
-        - "bind-utils"
-        - "byobu"
-        - "clang"
-        - "curl"
-        - "drpm"
-        - "@Development tools"
-        - "firewalld"
-        - "git"
-        - "golang"
-        - "htop"
-        - "ImageMagick"
-        - "ImageMagick-devel"
-        - "iotop"
-        - "policycoreutils-python-utils"
-        - "pv"
-        - "vim"
-        - "rustc"
-        - "sendmail-cf"
-        - "tree"
-        - "vim"
-        - "wget"
-  - name: "installing packages via installers"
-    raw: "{{ item }}"
-    args:
-      executable: "/bin/bash"
-    with_items:
-      - "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony" # symfony
+    # See the default CentOS 8 package list at http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/
+    - name: "installing packages from package manager"
+      dnf:
+        name:
+          - "acl"
+          - "aide"
+          - "atop"
+          - "bind-utils"
+          - "byobu"
+          - "clang"
+          - "curl"
+          - "drpm"
+          - "@Development tools"
+          - "firewalld"
+          - "git"
+          - "golang"
+          - "htop"
+          - "ImageMagick"
+          - "ImageMagick-devel"
+          - "iotop"
+          - "policycoreutils-python-utils"
+          - "pv"
+          - "vim"
+          - "rustc"
+          - "sendmail-cf"
+          - "tree"
+          - "vim"
+          - "wget"
+    - name: "installing packages via installers"
+      raw: "{{ item }}"
+      args:
+        executable: "/bin/bash"
+      with_items:
+        - "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony" # symfony
 ########################################################################################################################
 
 ########################################################################################################################

@@ -1,0 +1,131 @@
+{
+  "builders": [
+    {
+      "boot_command": [
+        "<esc><wait>",
+        "<esc><wait>",
+        "<enter><wait>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US.UTF-8<wait>",
+        " fb=false<wait>",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US.UTF-8<wait>",
+        " netcfg/get_domain=vm<wait>",
+        " netcfg/get_hostname=aracpac<wait>",
+        " grub-installer/bootdev=/dev/sda<wait>",
+        " noapic<wait>",
+        " preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/preseed.cfg<wait>",
+        " passwd/root-password=root",
+        " passwd/root-password-again=root",
+        " -- <wait>",
+        "<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": "{{ user `vb_disk_size` }}",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "guest_os_type": "Ubuntu_64",
+      "hard_drive_interface": "sata",
+      "headless": true,
+      "http_directory": "http",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `checksum_type` }}",
+      "iso_urls": [
+        "iso/{{ user `iso_name` }}",
+        "{{user `mirror`}}/{{user `mirror_directory`}}/{{user `iso_name`}}"
+      ],
+      "output_directory": "builds/virtualbox/aracpac-{{ user `image_name` }}-v{{ user `version` }}",
+      "sata_port_count": 5,
+      "shutdown_command": "/usr/sbin/shutdown -P now",
+      "ssh_password": "root",
+      "ssh_port": 22,
+      "ssh_username": "root",
+      "ssh_timeout": "10000s",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "{{ user `vb_memory` }}"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "{{ user `vb_cpus` }}"
+        ]
+      ],
+      "virtualbox_version_file": ".vbox_version",
+      "vm_name": "aracpac-{{ user `image_name` }}-v{{ user `version` }}"
+    }
+  ],
+  "post-processors": [
+    {
+      "compression_level": "8",
+      "output": "builds/{{ user `image_name` }}-v{{ user `version` }}.box",
+      "type": "vagrant",
+      "vagrantfile_template": "ansible/files/Vagrantfile"
+    }
+  ],
+  "provisioners": [
+    {
+      "expect_disconnect": true,
+      "only": [
+        "virtualbox-iso"
+      ],
+      "scripts": [
+        "scripts/virtualbox.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "expect_disconnect": true,
+      "scripts": [
+        "scripts/update.sh",
+        "scripts/ansible.sh",
+        "scripts/sshd.sh",
+        "scripts/networking.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "clean_staging_directory": true,
+      "extra_arguments": [
+        "--extra-vars",
+        "'{}'"
+      ],
+      "galaxy_file": "ansible/requirements.yml",
+      "playbook_dir": "ansible",
+      "playbook_file": "ansible/main.yml",
+      "type": "ansible-local"
+    },
+    {
+      "expect_disconnect": true,
+      "scripts": [
+        "scripts/cleanup.sh",
+        "scripts/minimize.sh"
+      ],
+      "type": "shell"
+    }
+  ],
+  "variables": {
+    "checksum_type": "sha256",
+    "image_name": "ubuntu20",
+    "iso_checksum": "f11bda2f2caed8f420802b59f382c25160b114ccc665dbac9c5046e7fceaced2",
+    "iso_name": "ubuntu-20.04.1-legacy-server-amd64.iso",
+    "mirror": "http://cdimage.ubuntu.com/ubuntu-legacy-server/releases/",
+    "mirror_directory": "20.04/release",
+    "vb_cpus": "4",
+    "vb_disk_size": "512000",
+    "vb_memory": "4096",
+    "version": "0.1"
+  }
+}

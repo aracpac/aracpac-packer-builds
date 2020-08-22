@@ -16,17 +16,11 @@ packer build packer.json
 
 Once the builds have completed, you can find the generated boxes in the `rhel8/builds` directory. 
 
-The packer [build](https://packer.io/docs/commands/build.html) command can be modified in many ways. For instance, to 
-build only a specific build, you can use the `--only` flag. To disable packers garbage collection when an error occurs
-(which is useful for debugging the build artifacts), you can modify the `--on-error` flag. For instance:
-
-```
-packer build --on-error=abort packer.json
-```
-
 ## Defaults
-Boxes are built from scratch based on [Hashicorp recommendations](https://www.vagrantup.com/docs/boxes.html) and 
-configuration taken largely from the [Bento Box](https://github.com/chef/bento) project.
+Distro images are configured in line with [Hashicorp recommendations](https://www.vagrantup.com/docs/boxes.html) and 
+using forked scripts from the [Bento Box](https://github.com/chef/bento) project. Software configuration is handled
+primarily via [geerlingguy's](https://galaxy.ansible.com/geerlingguy) [Ansible Galaxy](https://galaxy.ansible.com/) 
+roles.
  
 In addition, the boxes are configured as follows:
 * a `root` user with password `root`
@@ -39,9 +33,7 @@ In addition, the boxes are configured as follows:
 * `nfsd` installed and configured with the following share: `/var/www *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)`
 * `firewalld` installed, enabled, and configured for the stack
 * a purpose-built local `dev.crt` and `dev.pem` in `/etc/ssl`
-* `250G` VirtualBox primary disk (useful on larger projects -- most publicly available boxes have `40G` disks). **Note:**
-that this means you will need more than `250G` disk space on the machine that you use to build the boxes
-(see `scripts/common/minimize.sh` to understand why).
+* `500G` VirtualBox primary disk (useful on larger projects -- most publicly available boxes have `40G` disks)
 
 The boxes include the following additional software:
 * `acl`
@@ -93,11 +85,4 @@ The RHEL boxes include the following additional repos:
  * [remi](https://rpms.remirepo.net/)
 
 The apache daemon's umask is set to `0002`, the vagrant user belongs to the apache group, and the apache user belongs to 
-the vagrant group. 
- 
-## Customization
-### Packer
-All customization should be done in ansible, by editing the `ansible/main.yml` and `ansible/host_vars/common.yml` files. 
-
-### Ansible
-All roles are from [geerlingguy](https://galaxy.ansible.com/geerlingguy) via [Ansible Galaxy](https://galaxy.ansible.com/).
+the vagrant group.
