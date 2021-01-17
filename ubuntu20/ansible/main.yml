@@ -163,13 +163,15 @@
     - "geerlingguy.nodejs"
     - "geerlingguy.nfs"
   post_tasks:
-    - name: "installing xdebug via pear"
+    - name: "installing xdebug via pear and enabling php-fpm"
       raw: "{{ item }}"
       args:
         executable: "/bin/bash"
       with_items:
         - "pecl channel-update pecl.php.net"
         - "pecl install xdebug"
+        - "a2enmod proxy_fcgi"
+        - "a2enconf php8.0-fpm"
     - name: "create xdebug log file"
       file:
         mode: "0777"

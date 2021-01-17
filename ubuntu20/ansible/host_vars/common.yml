@@ -90,6 +90,7 @@ php_packages:
   - "php-common"
   - "php-curl"
   - "php-dev"
+  - "php-fpm"
   - "php-gd"
   - "php-imap"
   - "php-igbinary"
