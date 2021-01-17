@@ -104,7 +104,6 @@
       dnf:
         name:
           - "acl"
-          - "aide"
           - "atop"
           - "bind-utils"
           - "byobu"
@@ -148,7 +147,6 @@
   roles:
     - "geerlingguy.php-versions"
     - "geerlingguy.php"
-    - "geerlingguy.php-xdebug"
     - "geerlingguy.apache"
     - "geerlingguy.nginx"
     - "geerlingguy.varnish"
@@ -161,19 +159,32 @@
     - "geerlingguy.nodejs"
     - "geerlingguy.nfs"
   post_tasks:
+    - name: "create xdebug log file"
+      file:
+        mode: "0777"
+        path: "/var/log/xdebug.log"
+        state: "touch"
+    - name: "create xdebug config"
+      copy:
+        dest: "/etc/php.d/20-xdebug.ini"
+        content: |
+          [XDebug]
+          zend_extension=/usr/lib64/php/modules/xdebug.so
+          xdebug.log=/var/log/xdebug.log
+          xdebug.client_host=localhost
+          xdebug.client_port=9003
+          xdebug.discover_client_host=true
+          xdebug.idekey=xdebug.ide
+          xdebug.log_level=7
+          xdebug.max_nesting_level=256
+          xdebug.mode=off
+          xdebug.start_with_request=true
     - name: "update default apache vhost"
       replace:
         path: "/etc/httpd/conf/httpd.conf"
         regexp: '(.*)(\/var\/www\/html)(.*)'
         replace: '\1/var/www\3'
       notify: "restart apache"
-    - name: "create xdebug log file"
-      copy:
-        content: ""
-        dest: "{{ php_xdebug_remote_log }}"
-        force: "yes"
-        mode: "0777"
-      notify: "restart webserver"
     - name: "install varnish devel"
       dnf:
         name: "varnish-devel"
@@ -203,6 +214,7 @@
       git:
         dest: "/tmp/vmods"
         repo: "https://github.com/varnish/varnish-modules.git"
+        version: "6.5"
       when: "varnish_build_vmods"
     - name: "bootstrap the source"
       args:

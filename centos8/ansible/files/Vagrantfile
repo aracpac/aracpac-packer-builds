@@ -59,7 +59,7 @@ if Vagrant::Util::Platform.windows?
     end
 else
     $nfsmount = <<-NFSMOUNT
-    sudo mount -t nfs -o rw,rsize=8192,wsize=8192,vers=3 #{vagrantConfig[ "ip" ]}:#{vagrantConfig[ "remote_share_point" ]} #{vagrantConfig[ "local_share_point" ]}
+    sudo mount -t nfs -o rw,rsize=8192,wsize=8192 #{vagrantConfig[ "ip" ]}:#{vagrantConfig[ "remote_share_point" ]} #{vagrantConfig[ "local_share_point" ]}
     NFSMOUNT
 
     $nfsumount = <<-NFSUMOUNT

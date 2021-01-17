@@ -145,16 +145,15 @@
   vars_files:
     - "host_vars/common.yml"
   pre_tasks:
-    - include_role: # TODO: move this into the regular roles once the package cloud repo issue has been fixed
-        name: "geerlingguy.varnish"
+    - include_role: # TODO: move this into the regular roles once the upstream php-versions repo stops wiping out php_packages
+        name: "geerlingguy.php-versions"
       vars:
-        varnish_packagecloud_repo: "varnish-weekly"
+        __php_packages: "{{ php_packages }}"
   roles:
-    - "geerlingguy.php-versions"
     - "geerlingguy.php"
-    - "geerlingguy.php-xdebug"
     - "geerlingguy.apache"
     - "geerlingguy.nginx"
+    - "geerlingguy.varnish"
     - "geerlingguy.mysql"
     - "geerlingguy.php-mysql"
     - "geerlingguy.memcached"
@@ -164,19 +163,48 @@
     - "geerlingguy.nodejs"
     - "geerlingguy.nfs"
   post_tasks:
+    - name: "installing xdebug via pear"
+      raw: "{{ item }}"
+      args:
+        executable: "/bin/bash"
+      with_items:
+        - "pecl channel-update pecl.php.net"
+        - "pecl install xdebug"
+    - name: "create xdebug log file"
+      file:
+        mode: "0777"
+        path: "/var/log/xdebug.log"
+        state: "touch"
+    - name: "create xdebug config"
+      copy:
+        dest: "/etc/php/8.0/mods-available/xdebug.ini"
+        content: |
+          [XDebug]
+          zend_extension=/usr/lib/php/20200930/xdebug.so
+          xdebug.log=/var/log/xdebug.log
+          xdebug.client_host=localhost
+          xdebug.client_port=9003
+          xdebug.discover_client_host=true
+          xdebug.idekey=xdebug.ide
+          xdebug.log_level=7
+          xdebug.max_nesting_level=256
+          xdebug.mode=off
+          xdebug.start_with_request=true
+    - name: "enable xdebug"
+      file:
+        dest: "{{ item }}"
+        src: "/etc/php/8.0/mods-available/xdebug.ini"
+        state: "link"
+      with_items:
+        - "/etc/php/8.0/apache2/conf.d/20-xdebug.ini"
+        - "/etc/php/8.0/cli/conf.d/20-xdebug.ini"
+        - "/etc/php/8.0/fpm/conf.d/20-xdebug.ini"
     - name: "update default apache vhost"
       replace:
         path: "/etc/apache2/apache2.conf"
         regexp: '(.*)(\/var\/www\/html)(.*)'
         replace: '\1/var/www\3'
       notify: "restart apache"
-    - name: "create xdebug log file"
-      copy:
-        content: ""
-        dest: "{{ php_xdebug_remote_log }}"
-        force: "yes"
-        mode: "0777"
-      notify: "restart webserver"
     - name: "install varnish devel"
       apt:
         name: "varnish-dev"
@@ -206,6 +234,7 @@
       git:
         dest: "/tmp/vmods"
         repo: "https://github.com/varnish/varnish-modules.git"
+        version: "6.5"
       when: "varnish_build_vmods"
     - name: "bootstrap the source"
       args:

@@ -59,7 +59,7 @@ if Vagrant::Util::Platform.windows?
     end
 else
     $nfsmount = <<-NFSMOUNT
-    sudo mount -t nfs -o rw,rsize=8192,wsize=8192,vers=3 #{vagrantConfig[ "ip" ]}:#{vagrantConfig[ "remote_share_point" ]} #{vagrantConfig[ "local_share_point" ]}
+    sudo mount -t nfs -o rw,rsize=8192,wsize=8192 #{vagrantConfig[ "ip" ]}:#{vagrantConfig[ "remote_share_point" ]} #{vagrantConfig[ "local_share_point" ]}
     NFSMOUNT
 
     $nfsumount = <<-NFSUMOUNT
@@ -82,7 +82,7 @@ Vagrant.configure( "2" ) do |config|
         config.hostmanager.include_offline = true
     end
     # configure vagrant
-    config.vm.box = "aracpac/centos8"
+    config.vm.box = "aracpac/ubuntu20"
     config.vm.define vagrantConfig[ "hostname" ] do |node|
         node.vm.hostname = vagrantConfig[ "hostname" ]
         node.vm.network "private_network", ip: vagrantConfig[ "ip" ]

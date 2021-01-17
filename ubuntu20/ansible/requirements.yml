@@ -10,5 +10,4 @@
 - src: "geerlingguy.php-memcached"
 - src: "geerlingguy.php-mysql"
 - src: "geerlingguy.php-versions"
-- src: "geerlingguy.php-xdebug"
 - src: "geerlingguy.varnish"

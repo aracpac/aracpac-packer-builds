@@ -97,13 +97,13 @@
   "variables": {
     "checksum_type": "sha256",
     "image_name": "centos8",
-    "iso_checksum": "c87a2d81d67bbaeaf646aea5bedd70990078ec252fc52f5a7d65ff609871e255",
-    "iso_name": "CentOS-8.2.2004-x86_64-dvd1.iso",
+    "iso_checksum": "aaf9d4b3071c16dbbda01dfe06085e5d0fdac76df323e3bbe87cce4318052247",
+    "iso_name": "CentOS-8.3.2011-x86_64-dvd1.iso",
     "mirror": "http://mirrors.kernel.org/centos",
-    "mirror_directory": "8.2.2004/isos/x86_64",
-    "vb_cpus": "4",
+    "mirror_directory": "8.3.2011/isos/x86_64",
+    "vb_cpus": "8",
     "vb_disk_size": "512000",
-    "vb_memory": "4096",
-    "version": "0.1"
+    "vb_memory": "8192",
+    "version": "1.0"
   }
 }
