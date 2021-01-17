@@ -27,7 +27,7 @@ In addition, the boxes are configured as follows:
 * a `vagrant` user with password `vagrant`, passwordless `sudo`, and an entry for the vagrant insecure key in `~/.ssh/authorized_keys`
 * `apache` listening on port `80` and `443` and serving from `/var/www`
 * `mysql` listening on port `3306` and with `root` password `root`
-* `php-xdebug` installed and available on port `9000` but disabled by default (enable in `/etc/php.d/xdebug.ini`)
+* `php-xdebug` installed and available on port `9003` but disabled by default
 * `varnish` configured to listen on `8080` but disabled by default
 * `nginx` installed but disabled by default
 * `nfsd` installed and configured with the following share: `/var/www *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)`
