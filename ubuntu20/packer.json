@@ -35,8 +35,7 @@
       "hard_drive_interface": "sata",
       "headless": true,
       "http_directory": "http",
-      "iso_checksum": "{{ user `iso_checksum` }}",
-      "iso_checksum_type": "{{ user `checksum_type` }}",
+      "iso_checksum": "{{ user `checksum_type` }}:{{ user `iso_checksum` }}",
       "iso_urls": [
         "iso/{{ user `iso_name` }}",
         "{{user `mirror`}}/{{user `mirror_directory`}}/{{user `iso_name`}}"
@@ -46,8 +45,8 @@
       "shutdown_command": "/usr/sbin/shutdown -P now",
       "ssh_password": "root",
       "ssh_port": 22,
-      "ssh_username": "root",
       "ssh_timeout": "10000s",
+      "ssh_username": "root",
       "type": "virtualbox-iso",
       "vboxmanage": [
         [
@@ -129,3 +128,4 @@
     "version": "1.0"
   }
 }
+
