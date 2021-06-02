@@ -42,6 +42,7 @@ The boxes include the following additional software:
 * `byobu`
 * `composer`
 * `curl`
+* `docker-ce`
 * `git`
 * `golang`
 * `htop`
@@ -49,12 +50,14 @@ The boxes include the following additional software:
 * `java`
 * `memcached`
 * `nodejs`
+* `ncat`
 * `pv`
 * `vim`
 * `rsync`
 * `rustc`
 * `sass`
 * `sendmail`
+* `supervisor`
 * `symfony`
 * `tree`
 * `unzip`
