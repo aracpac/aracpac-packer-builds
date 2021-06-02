@@ -1,5 +1,6 @@
 - src: "geerlingguy.apache"
 - src: "geerlingguy.composer"
+- src: "geerlingguy.docker"
 - src: "geerlingguy.java"
 - src: "geerlingguy.memcached"
 - src: "geerlingguy.mysql"
