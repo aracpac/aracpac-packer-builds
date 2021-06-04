@@ -125,7 +125,7 @@
     "vb_cpus": "8",
     "vb_disk_size": "512000",
     "vb_memory": "8192",
-    "version": "1.1.0"
+    "version": "1.1.1"
   }
 }
 
