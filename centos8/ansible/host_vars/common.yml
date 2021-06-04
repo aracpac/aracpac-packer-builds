@@ -111,6 +111,7 @@ php_packages:
   - "php-pspell"
   - "php-soap"
   - "php-xml"
+  - "php-zip"
 php_post_max_size: "51M"
 php_session_gc_maxlifetime: "2592000"
 php_session_gc_probability: "1"

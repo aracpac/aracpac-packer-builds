@@ -168,21 +168,6 @@
         mode: "0777"
         path: "/var/log/xdebug.log"
         state: "touch"
-    - name: "create xdebug config"
-      copy:
-        dest: "/etc/php.d/20-xdebug.ini"
-        content: |
-          [XDebug]
-          zend_extension=/usr/lib64/php/modules/xdebug.so
-          xdebug.log=/var/log/xdebug.log
-          xdebug.client_host=localhost
-          xdebug.client_port=9003
-          xdebug.discover_client_host=true
-          xdebug.idekey=xdebug.ide
-          xdebug.log_level=7
-          xdebug.max_nesting_level=256
-          xdebug.mode=off
-          xdebug.start_with_request=true
     - name: "update default apache vhost"
       replace:
         path: "/etc/httpd/conf/httpd.conf"

@@ -128,6 +128,7 @@
         - "supervisor"
         - "tree"
         - "vim"
+        - "unzip"
   - name: "installing packages via installers"
     raw: "{{ item }}"
     args:
