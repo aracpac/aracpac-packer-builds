@@ -156,6 +156,8 @@
     - "geerlingguy.varnish"
     - "geerlingguy.mysql"
     - "geerlingguy.php-mysql"
+    - "geerlingguy.postgresql"
+    - "geerlingguy.php-pgsql"
     - "geerlingguy.memcached"
     - "geerlingguy.php-memcached"
     - "geerlingguy.java"
@@ -203,7 +205,7 @@
       git:
         dest: "/tmp/vmods"
         repo: "https://github.com/varnish/varnish-modules.git"
-        version: "6.5"
+        version: "6.6"
       when: "varnish_build_vmods"
     - name: "bootstrap the source"
       args:

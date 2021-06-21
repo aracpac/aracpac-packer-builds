@@ -120,6 +120,15 @@ php_variables_order: "EGPCS"
 php_version: "8.0"
 php_webserver_daemon: "httpd"
 
+# PGSQL settings #######################################################################################################
+postgres_users_no_log: "false"
+postgresql_users:
+  - name: "root"
+    db: "postgres"
+    password: "root"
+    priv: "ALL"
+    role_attr_flags: "login,superuser"
+
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
 server_document_root: "/var/www"
@@ -131,4 +140,4 @@ server_users:
 varnish_default_backend_host: "127.0.0.1"
 varnish_default_backend_port: "80"
 varnish_listen_port: "8080"
-varnish_version: "6.5"
+varnish_version: "6.6"

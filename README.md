@@ -27,6 +27,7 @@ In addition, the boxes are configured as follows:
 * a `vagrant` user with password `vagrant`, passwordless `sudo`, and an entry for the vagrant insecure key in `~/.ssh/authorized_keys`
 * `apache` listening on port `80` and `443` and serving from `/var/www`
 * `mysql` listening on port `3306` and with `root` password `root`
+* `postgresql` listening on port `5432` and with `root` password `root`
 * `php-xdebug` installed and available on port `9003` but disabled by default
 * `varnish` configured to listen on `8080` but disabled by default
 * `nginx` installed but disabled by default
