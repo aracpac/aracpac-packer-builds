@@ -118,14 +118,14 @@
   "variables": {
     "checksum_type": "sha256",
     "image_name": "ubuntu20",
-    "iso_checksum": "f11bda2f2caed8f420802b59f382c25160b114ccc665dbac9c5046e7fceaced2",
-    "iso_name": "ubuntu-20.04.1-legacy-server-amd64.iso",
-    "mirror": "http://cdimage.ubuntu.com/ubuntu-legacy-server/releases",
-    "mirror_directory": "20.04.1/release",
+    "iso_checksum": "d1f2bf834bbe9bb43faf16f9be992a6f3935e65be0edece1dee2aa6eb1767423",
+    "iso_name": "ubuntu-20.04.2-live-server-amd64.iso",
+    "mirror": "http://releases.ubuntu.com",
+    "mirror_directory": "20.04",
     "vb_cpus": "8",
     "vb_disk_size": "512000",
     "vb_memory": "8192",
-    "version": "1.2.0"
+    "version": "1.3.0"
   }
 }
 
