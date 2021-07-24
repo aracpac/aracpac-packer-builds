@@ -124,11 +124,16 @@ php_webserver_daemon: "apache2"
 # PGSQL settings #######################################################################################################
 postgres_users_no_log: "false"
 postgresql_users:
-  - name: "root"
+  - name: "vagrant"
     db: "postgres"
-    password: "root"
+    password: "vagrant"
     priv: "ALL"
     role_attr_flags: "login,superuser"
+
+# Projector settings ###################################################################################################
+projector_ides:
+  - { config: "phpstorm", ide: "phpstorm 2021.1.4" }
+projector_configs: "/etc/projector/configs/"
 
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"

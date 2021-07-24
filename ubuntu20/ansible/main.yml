@@ -169,6 +169,10 @@
     - "geerlingguy.nodejs"
     - "geerlingguy.nfs"
   post_tasks:
+    - name: "installing PostGIS (requires PostgreSQL to be installed first)"
+      apt:
+        name:
+          - "postgis"
     - name: "installing xdebug via pear and enabling php-fpm"
       raw: "{{ item }}"
       args:
@@ -272,6 +276,52 @@
 ########################################################################################################################
 
 ########################################################################################################################
+# Configure projector #####################################################################################################
+########################################################################################################################
+- name: "configuring projector"
+  become: "yes"
+  hosts: "all"
+  tags:
+    - "configure_projector"
+  vars_files:
+    - "host_vars/common.yml"
+  tasks:
+    - name: "install projector via pip"
+      pip:
+        name: "projector-installer"
+        executable: "pip3"
+    - name: "install projector IDEs"
+      raw: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config }} --ide-name \"{{ item.ide }}\""
+      args:
+        executable: "/bin/bash"
+      with_items: "{{ projector_ides }}"
+      when: "(projector_configs + item.config) is not directory" # this only works because we run ansible locally
+    - name: "install projector IDE certs for SSL"
+      raw: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config }}"
+      args:
+        executable: "/bin/bash"
+      with_items: "{{ projector_ides }}"
+      when: "(projector_configs + item.config + '/ssl.properties') is not file" # this only works because we run ansible locally
+    - name: "create service files for projector IDEs"
+      template:
+        src: "templates/projector/service.j2"
+        dest: "/etc/systemd/system/{{ item.config }}.service"
+      vars: { config: "{{ item.config }}", ide: "{{ item.ide }}" }
+      with_items: "{{ projector_ides }}"
+      when: "(projector_configs + item.config) is not directory" # this only works because we run ansible locally
+    - name: "increase inotify max user watches"
+      lineinfile:
+        path: "/etc/sysctl.conf"
+        state: "present"
+        line: "fs.inotify.max_user_watches=524288"
+    - name: "delete installer archives"
+      file:
+        path: "{{ item }}"
+        state: "absent"
+      with_fileglob: "/etc/projector/*.gz"
+########################################################################################################################
+
+########################################################################################################################
 # Configure apache #####################################################################################################
 ########################################################################################################################
 - name: "configuring apache"
@@ -365,6 +415,7 @@
         - { name: "mountd", state: "enabled" }
         - { name: "mysql", state: "enabled" }
         - { name: "nfs", state: "enabled" }
+        - { name: "postgresql", state: "enabled" }
         - { name: "rpc-bind", state: "enabled" }
         - { name: "samba", state: "enabled" }
         - { name: "ssh", state: "enabled" }
@@ -374,8 +425,11 @@
         port: "{{ item.port }}"
         state: "{{ item.state }}"
       with_items:
-        - { port: "36389/tcp", state: "enabled" } # this is to avoid lockd issues with nfs mounts on windows hosts
-        - { port: "36389/udp", state: "enabled" } # this is to avoid lockd issues with nfs mounts on mac hosts
+        - { port: "9999/tcp", state: "enabled" } # projector port
+        - { port: "8080/tcp", state: "enabled" } # alt http
+        - { port: "8443/tcp", state: "enabled" } # alt https
+        - { port: "36389/tcp", state: "enabled" } # lockd windows
+        - { port: "36389/udp", state: "enabled" } # lockd mac
     - name: "reload firewalld"
       systemd:
         daemon_reload: "true"
