@@ -6,7 +6,8 @@
         "text ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks.cfg",
         "<enter><wait>"
       ],
-      "boot_wait": "10s",
+      "boot_wait": "5s",
+      "cpus": "{{ user `vb_cpus` }}",
       "disk_size": "{{ user `vb_disk_size` }}",
       "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
       "guest_os_type": "RedHat_64",
@@ -18,6 +19,7 @@
         "iso/{{ user `iso_name` }}",
         "{{user `mirror`}}/{{user `mirror_directory`}}/{{user `iso_name`}}"
       ],
+      "memory": "{{ user `vb_memory` }}",
       "output_directory": "builds/virtualbox/aracpac-{{ user `image_name` }}-v{{ user `version` }}",
       "sata_port_count": 5,
       "shutdown_command": "/sbin/halt -h -p",
@@ -26,20 +28,6 @@
       "ssh_timeout": "10000s",
       "ssh_username": "root",
       "type": "virtualbox-iso",
-      "vboxmanage": [
-        [
-          "modifyvm",
-          "{{.Name}}",
-          "--memory",
-          "{{ user `vb_memory` }}"
-        ],
-        [
-          "modifyvm",
-          "{{.Name}}",
-          "--cpus",
-          "{{ user `vb_cpus` }}"
-        ]
-      ],
       "virtualbox_version_file": ".vbox_version",
       "vm_name": "aracpac-{{ user `image_name` }}-v{{ user `version` }}"
     }
