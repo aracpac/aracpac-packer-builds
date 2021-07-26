@@ -179,7 +179,9 @@
       vars:
         __postgresql_version: "13"
         __postgresql_daemon: "postgresql-13"
+        __postgresql_data_dir: "/var/lib/pgsql/{{ __postgresql_version }}/data"
         __postgresql_bin_path: "/usr/pgsql-{{ __postgresql_version }}/bin/"
+        __postgresql_config_path: "/var/lib/pgsql/{{ __postgresql_version }}/data"
         __postgresql_packages:
           - "postgresql13-server"
           - "postgresql13-contrib"
