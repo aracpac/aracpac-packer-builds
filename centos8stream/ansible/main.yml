@@ -121,6 +121,7 @@
           - "nmap"
           - "policycoreutils-python-utils"
           - "python3"
+          - "python-pip"
           - "pv"
           - "vim"
           - "rustc"
@@ -249,26 +250,20 @@
   vars_files:
     - "host_vars/common.yml"
   tasks:
-    - name: "install projector via pip"
-      pip:
-        name: "projector-installer"
-        executable: "pip3"
     - name: "install projector IDEs"
-      raw: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config }} --ide-name \"{{ item.ide }}\""
+      command: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config|quote }} --ide-name {{ item.ide|quote }}"
       args:
-        executable: "/bin/bash"
+        creates: "{{projector_configs + item.config}}"
       with_items: "{{ projector_ides }}"
-      when: "(projector_configs + item.config) is not directory" # this only works because we run ansible locally
     - name: "install projector IDE certs for SSL"
-      raw: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config }}"
+      command: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config|quote }}"
       args:
-        executable: "/bin/bash"
+        creates: "{{ projector_configs + item.config + '/ssl.properties' }}"
       with_items: "{{ projector_ides }}"
-      when: "(projector_configs + item.config + '/ssl.properties') is not file"
     - name: "create service files for projector IDEs"
       template:
         src: "templates/projector/service.j2"
-        dest: "/etc/systemd/system/{{ item.config }}.service"
+        dest: "/etc/systemd/system/projector_{{ item.config }}.service"
       vars: { config: "{{ item.config }}", ide: "{{ item.ide }}" }
       with_items: "{{ projector_ides }}"
     - name: "increase inotify max user watches"
@@ -276,11 +271,16 @@
         path: "/etc/sysctl.conf"
         state: "present"
         line: "fs.inotify.max_user_watches=524288"
+    - name : "find installer archives"
+      find:
+        paths: "/etc/projector"
+        patterns: '*.gz'
+      register: "installer_archives"
     - name: "delete installer archives"
       file:
-        path: "{{ item }}"
+        path: "{{ item.path }}"
         state: "absent"
-      with_fileglob: "/etc/projector/*.gz"
+      with_items: "{{ installer_archives.files }}"
 ########################################################################################################################
 
 ########################################################################################################################
