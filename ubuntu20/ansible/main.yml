@@ -153,6 +153,21 @@
         name: "geerlingguy.php-versions"
       vars:
         __php_packages: "{{ php_packages }}"
+    - name: "add postgresql ubuntu repo key"
+      apt_key:
+        url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+        state: "present"
+    - name: "install the postgresql ubuntu repo"
+      apt_repository:
+        repo: "deb https://apt.postgresql.org/pub/repos/apt focal-pgdg main"
+        state: "present"
+    - include_role:
+        name: "geerlingguy.postgresql"
+      vars:
+        __postgresql_version: "13"
+        __postgresql_packages:
+          - "postgresql-13"
+          - "postgresql-contrib"
   roles:
     - "geerlingguy.php"
     - "geerlingguy.apache"
@@ -161,7 +176,6 @@
     - "geerlingguy.varnish"
     - "geerlingguy.mysql"
     - "geerlingguy.php-mysql"
-    - "geerlingguy.postgresql"
     - "geerlingguy.php-pgsql"
     - "geerlingguy.memcached"
     - "geerlingguy.php-memcached"

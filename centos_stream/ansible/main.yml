@@ -147,6 +147,42 @@
     - "install_roles"
   vars_files:
     - "host_vars/common.yml"
+  pre_tasks:
+    - name: "ensure postgresql module file is present"
+      file:
+        path: "/etc/dnf/modules.d/postgresql.module"
+        state: "touch"
+        mode: "u+rw,g-wx,o-rwx"
+        modification_time: "preserve"
+        access_time: "preserve"
+    - name: "disable postgresql module"
+      lineinfile:
+        path: "/etc/dnf/modules.d/postgresql.module"
+        state: "present"
+        line: "{{ item }}"
+      with_items:
+        - "[postgresql]"
+        - "name=postgresql"
+        - "stream="
+        - "profiles="
+        - "state=disabled"
+    - name: "add postgresql rhel repo key"
+      ansible.builtin.rpm_key:
+        state: "present"
+        key: "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-13"
+    - name: "install the postgresql rhel repo"
+      dnf:
+        name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+        state: "present"
+    - include_role:
+        name: "geerlingguy.postgresql"
+      vars:
+        __postgresql_version: "13"
+        __postgresql_daemon: "postgresql-13"
+        __postgresql_bin_path: "/usr/pgsql-{{ __postgresql_version }}/bin/"
+        __postgresql_packages:
+          - "postgresql13-server"
+          - "postgresql13-contrib"
   roles:
     - "geerlingguy.php-versions"
     - "geerlingguy.php"
@@ -156,7 +192,6 @@
     - "geerlingguy.varnish"
     - "geerlingguy.mysql"
     - "geerlingguy.php-mysql"
-    - "geerlingguy.postgresql"
     - "geerlingguy.php-pgsql"
     - "geerlingguy.memcached"
     - "geerlingguy.php-memcached"
@@ -165,6 +200,12 @@
     - "geerlingguy.nodejs"
     - "geerlingguy.nfs"
   post_tasks:
+  tasks:
+    - name: "fix bad directive in nodesource repo" # TODO: remove when upstream is fixed
+      lineinfile:
+        path: "/etc/yum.repos.d/nodesource-el8.repo"
+        state: "absent"
+        line: "failovermethod=priority"
     - name: "installing PostGIS (requires PostgreSQL to be installed first)"
       dnf:
         name:

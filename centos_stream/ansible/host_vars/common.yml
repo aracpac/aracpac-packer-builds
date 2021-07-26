@@ -128,7 +128,6 @@ postgresql_users:
     password: "vagrant"
     priv: "ALL"
     role_attr_flags: "login,superuser"
-postgresql_version: "13"
 
 # Projector settings ###################################################################################################
 projector_ides:
