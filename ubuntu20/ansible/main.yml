@@ -287,13 +287,17 @@
   vars_files:
     - "host_vars/common.yml"
   tasks:
+    - name: "install jetbrains projector-installer"
+      pip:
+        name: "projector-installer"
+        executable: "pip3"
     - name: "install projector IDEs"
-      command: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config|quote }} --ide-name {{ item.ide|quote }}"
+      command: "/usr/local/bin/projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config|quote }} --ide-name {{ item.ide|quote }}"
       args:
         creates: "{{projector_configs + item.config}}"
       with_items: "{{ projector_ides }}"
     - name: "install projector IDE certs for SSL"
-      command: "projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config|quote }}"
+      command: "/usr/local/bin/projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config|quote }}"
       args:
         creates: "{{ projector_configs + item.config + '/ssl.properties' }}"
       with_items: "{{ projector_ides }}"
