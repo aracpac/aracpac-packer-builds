@@ -29,7 +29,7 @@ In addition, the boxes are configured as follows:
 * `mysql` listening on port `3306` and with `root` password `root`
 * `postgresql` listening on port `5432` and with `vagrant` password `vagrant`
 * `php-xdebug` installed and available on port `9003` but disabled by default
-* JetBrains `projector` installed (with PHPStorm) and available on port `9999`
+* JetBrains `projector` installed, with PHPStorm installed as a service (`projector_phpstorm`) on port `9999` but disabled by default
 * `varnish` configured to listen on `8080` but disabled by default
 * `nginx` installed but disabled by default
 * `nfsd` installed and configured with the following share: `/var/www *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)`
