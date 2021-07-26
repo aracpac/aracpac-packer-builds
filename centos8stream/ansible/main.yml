@@ -121,7 +121,6 @@
           - "nmap"
           - "policycoreutils-python-utils"
           - "python3"
-          - "python-pip"
           - "pv"
           - "vim"
           - "rustc"
