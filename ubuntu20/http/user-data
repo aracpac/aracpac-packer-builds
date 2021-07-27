@@ -8,11 +8,11 @@ autoinstall:
   late-commands:
     # see https://curtin.readthedocs.io/en/latest/topics/overview.html
     - curtin in-target --target=/target -- sed -i "s/^#PermitRootLogin.*\$/PermitRootLogin yes/g" /etc/ssh/sshd_config
-    - curtin in-target --target=/target -- deluser --remove-home ubuntu
   ssh:
     install-server: yes
   user-data:
     # see https://cloudinit.readthedocs.io/en/latest/topics/modules.html
+    users:
     chpasswd:
       list: |
          root:root
