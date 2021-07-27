@@ -211,7 +211,7 @@
     - name: "installing PostGIS (requires PostgreSQL to be installed first)"
       dnf:
         name:
-          - "postgis"
+          - "postgis31_13"
     - name: "create xdebug log file"
       file:
         mode: "0777"
