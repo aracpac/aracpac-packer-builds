@@ -106,6 +106,7 @@ php_packages:
     - "php-imagick"
     - "php-ldap"
     - "php-mbstring"
+    - "php-memcache"
     - "php-msgpack"
     - "php-pear"
     - "php-pspell"
