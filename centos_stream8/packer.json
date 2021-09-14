@@ -83,14 +83,14 @@
   "variables": {
     "checksum_type": "sha256",
     "image_name": "centos8",
-    "iso_checksum": "9fc31f0853683175d4aa76e31a5b23ddfe51e477b114e1410401c6cf82f5b7cb",
-    "iso_name": "CentOS-Stream-8-x86_64-20210721-dvd1.iso",
+    "iso_checksum": "727d5f9deb5d8301cb30fb4eb7ddf8704cd0fbdc4ef632bb0ee5a32e3cf35fc3",
+    "iso_name": "CentOS-Stream-8-x86_64-20210907-dvd1.iso",
     "mirror": "http://mirrors.kernel.org/centos",
     "mirror_directory": "8-stream/isos/x86_64",
     "vb_cpus": "8",
     "vb_disk_size": "512000",
     "vb_memory": "8192",
-    "version": "1.3.0"
+    "version": "1.4.0"
   }
 }
 
