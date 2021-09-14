@@ -36,8 +36,7 @@
     {
       "compression_level": "8",
       "output": "builds/{{ user `image_name` }}-v{{ user `version` }}.box",
-      "type": "vagrant",
-      "vagrantfile_template": "ansible/files/Vagrantfile"
+      "type": "vagrant"
     }
   ],
   "provisioners": [
