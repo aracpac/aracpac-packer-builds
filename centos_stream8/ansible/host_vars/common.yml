@@ -8,29 +8,29 @@ apache_packages_state: "latest"
 apache_remove_default_vhost: "true"
 apache_state: "stopped"
 apache_vhosts:
-  - servername: "null"
-    serveralias: "*"
-    documentroot: "{{ server_document_root }}"
-    extra_parameters: |
-      RewriteCond %{HTTP_HOST} !^www\. [NC]
-      RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
+    -   servername: "null"
+        serveralias: "*"
+        documentroot: "{{ server_document_root }}"
+        extra_parameters: |
+            RewriteCond %{HTTP_HOST} !^www\. [NC]
+            RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 apache_vhosts_ssl:
-  - servername: "null"
-    serveralias: "*"
-    documentroot: "{{ server_document_root }}"
-    certificate_file: "/etc/ssl/dev.crt"
-    certificate_key_file: "/etc/ssl/dev.pem"
-    extra_parameters: |
-      RewriteCond %{HTTP_HOST} !^www\. [NC]
-      RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
+    -   servername: "null"
+        serveralias: "*"
+        documentroot: "{{ server_document_root }}"
+        certificate_file: "/etc/ssl/dev.crt"
+        certificate_key_file: "/etc/ssl/dev.pem"
+        extra_parameters: |
+            RewriteCond %{HTTP_HOST} !^www\. [NC]
+            RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 
 # Docker settings ######################################################################################################
 docker_service_state: stopped
 docker_service_enabled: no
 docker_users:
-  - vagrant
+    - vagrant
 
 # MySQL settings #######################################################################################################
 mysql_user_home: "/root"
@@ -44,11 +44,11 @@ overwrite_global_mycnf: "yes"
 
 # NFS settings #########################################################################################################
 nfs_exports:
-  - "# see https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/s1-nfs-server-config-exports"
-  - "# see https://linux.die.net/man/5/exports"
-  - "# *               - anyone on the network can access this share"
-  - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-  - "{{ server_document_root }}    *(all_squash,anonuid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].uid }},anongid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].gid }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
+    - "# see https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/s1-nfs-server-config-exports"
+    - "# see https://linux.die.net/man/5/exports"
+    - "# *               - anyone on the network can access this share"
+    - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
+    - "{{ server_document_root }}    *(all_squash,anonuid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].uid }},anongid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].gid }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
 # nginx settings #########################################################################################################
 nginx_remove_default_vhost: "true"
@@ -57,17 +57,17 @@ nginx_remove_default_vhost: "true"
 npm_config_prefix: "/usr"
 nodejs_install_npm_user: "root"
 nodejs_npm_global_packages:
-  - "diff-so-fancy"
-  - "rome"
-  - "sass"
-  - "uglifycss"
-  - "uglify-js"
-  - "webpack"
-  - "yarn"
+    - "diff-so-fancy"
+    - "rome"
+    - "sass"
+    - "uglifycss"
+    - "uglify-js"
+    - "webpack"
+    - "yarn"
 
 # PHP settings #########################################################################################################
 php_date_timezone: "{{ server_timezone }}"
-php_disable_functions: [] # or use the below to tighten it up
+php_disable_functions: [ ] # or use the below to tighten it up
 #  - "pcntl_alarm"
 #  - "pcntl_fork"
 #  - "pcntl_waitpid"
@@ -95,32 +95,32 @@ php_mysql_package: "php-mysqlnd"
 php_opcache_load_comments: "1"
 php_opcache_save_comments: "1"
 php_packages:
-  - "php{{ php_version }}"
-  - "php{{ php_version }}-apcu"
-  - "php{{ php_version }}-bcmath"
-  - "php{{ php_version }}-cli"
-  - "php{{ php_version }}-common"
-  - "php{{ php_version }}-curl"
-  - "php{{ php_version }}-dev"
-  - "php{{ php_version }}-fpm"
-  - "php{{ php_version }}-gd"
-  - "php{{ php_version }}-imap"
-  - "php{{ php_version }}-igbinary"
-  - "php{{ php_version }}-intl"
-  - "php{{ php_version }}-imagick"
-  - "php{{ php_version }}-json"
-  - "php{{ php_version }}-ldap"
-  - "php{{ php_version }}-mbstring"
-  - "php{{ php_version }}-memcache"
-  - "php{{ php_version }}-msgpack"
-  - "php-pear"
-  - "php{{ php_version }}-pspell"
-  - "php{{ php_version }}-soap"
-  - "php{{ php_version }}-readline"
-  - "php{{ php_version }}-sqlite3"
-  - "php{{ php_version }}-xml"
-  - "php{{ php_version }}-yaml"
-  - "php{{ php_version }}-zip"
+    - "php{{ php_version }}"
+    - "php{{ php_version }}-apcu"
+    - "php{{ php_version }}-bcmath"
+    - "php{{ php_version }}-cli"
+    - "php{{ php_version }}-common"
+    - "php{{ php_version }}-curl"
+    - "php{{ php_version }}-dev"
+    - "php{{ php_version }}-fpm"
+    - "php{{ php_version }}-gd"
+    - "php{{ php_version }}-imap"
+    - "php{{ php_version }}-igbinary"
+    - "php{{ php_version }}-intl"
+    - "php{{ php_version }}-imagick"
+    - "php{{ php_version }}-json"
+    - "php{{ php_version }}-ldap"
+    - "php{{ php_version }}-mbstring"
+    - "php{{ php_version }}-memcache"
+    - "php{{ php_version }}-msgpack"
+    - "php-pear"
+    - "php{{ php_version }}-pspell"
+    - "php{{ php_version }}-soap"
+    - "php{{ php_version }}-readline"
+    - "php{{ php_version }}-sqlite3"
+    - "php{{ php_version }}-xml"
+    - "php{{ php_version }}-yaml"
+    - "php{{ php_version }}-zip"
 php_post_max_size: "51M"
 php_session_gc_maxlifetime: "2592000"
 php_session_gc_probability: "1"
@@ -132,22 +132,22 @@ php_webserver_daemon: "httpd"
 # PGSQL settings #######################################################################################################
 postgres_users_no_log: "false"
 postgresql_users:
-  - name: "vagrant"
-    db: "postgres"
-    password: "vagrant"
-    priv: "ALL"
-    role_attr_flags: "login,superuser"
+    -   name: "vagrant"
+        db: "postgres"
+        password: "vagrant"
+        priv: "ALL"
+        role_attr_flags: "login,superuser"
 
 # Projector settings ###################################################################################################
 projector_ides:
-  - { config: "phpstorm", ide: "phpstorm 2021.1.4" }
+    - { config: "phpstorm", ide: "phpstorm 2021.1.4" }
 projector_configs: "/etc/projector/configs/"
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
 server_document_root: "/var/www"
 server_timezone: "America/Vancouver"
 server_users:
-  - { user: "vagrant", pass: "vagrant" }
+    - { user: "vagrant", pass: "vagrant" }
 
 # Varnish settings #####################################################################################################
 varnish_default_backend_host: "127.0.0.1"
