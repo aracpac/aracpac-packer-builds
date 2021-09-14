@@ -10,11 +10,11 @@ To build a box, simply `cd` into any configuration's directory and invoke `packe
 example, to build the CentOS 8 Stream box:
 
 ```
-cd centos8stream/
+cd centos_stream8/
 packer build packer.json
 ```
 
-Once the build has completed, you can find the generated box in the `centos8stream/builds` directory. 
+Once the build has completed, you can find the generated box in the `centos_stream8/builds` directory. 
 
 ## Defaults
 Distro images are configured in line with [Hashicorp recommendations](https://www.vagrantup.com/docs/boxes.html) and 
