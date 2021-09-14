@@ -55,34 +55,39 @@
         shell: "/bin/bash"
         state: "present"
         update_password: "on_create"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
+      register: "created_users"
     - name: "add a ~/.ssh folder for each user"
       file:
         dest: "/home/{{ item.user }}/.ssh"
         state: "directory"
         owner: "{{ item.user }}"
         group: "{{ item.user }}"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
     - name: "add the Vagrant insecure key to each user's ~/.ssh/authorized_keys file"
       get_url:
         url: "https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub"
         dest: "/home/{{ item.user }}/.ssh/authorized_keys"
         group: "{{ item.user }}"
         owner: "{{ item.user }}"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
     - name: "enable passwordless sudo"
       copy:
         dest: "/etc/sudoers.d/99_{{ item.user }}"
         content: "{{ item.user }} ALL=(ALL) NOPASSWD:ALL"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
     - name: "add dotfiles to each user's user directory"
-      copy:
+      no_log: "true"
+      synchronize:
         dest: "/home/{{ item.user }}"
-        group: "{{ item.user }}"
-        mode: "u=rw,g=r,o=r"
-        owner: "{{ item.user }}"
         src: "files/dotfiles/"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users + [server_system_user, { \"user\": \"root\" }] }}"
+      register: "accounts_dotfiles"
+      notify: "fix perms"
+  handlers:
+    - name: "fix perms"
+      command: "chown -R {{ item }}:{{ item }} /home/{{ item }}"
+      loop: "{{ accounts_dotfiles.results | selectattr('item.user', '!=', 'root') | selectattr('changed', '==', true) | map(attribute='item.user') | list }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -133,8 +138,9 @@
       raw: "{{ item }}"
       args:
         executable: "/bin/bash"
-      with_items:
+      loop:
         - "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony" # symfony
+        - "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp" # WordPress
 ########################################################################################################################
 
 ########################################################################################################################
@@ -160,7 +166,7 @@
         path: "/etc/dnf/modules.d/postgresql.module"
         state: "present"
         line: "{{ item }}"
-      with_items:
+      loop:
         - "[postgresql]"
         - "name=postgresql"
         - "stream="
@@ -186,9 +192,10 @@
           - "postgresql13-server"
           - "postgresql13-contrib"
   roles:
+    - "geerlingguy.apache"
     - "geerlingguy.php-versions"
     - "geerlingguy.php"
-    - "geerlingguy.apache"
+    - "geerlingguy.apache-php-fpm"
     - "geerlingguy.nginx"
     - "geerlingguy.docker"
     - "geerlingguy.varnish"
@@ -300,18 +307,18 @@
       command: "/usr/local/bin/projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license autoinstall --config-name {{ item.config|quote }} --ide-name {{ item.ide|quote }}"
       args:
         creates: "{{projector_configs + item.config}}"
-      with_items: "{{ projector_ides }}"
+      loop: "{{ projector_ides }}"
     - name: "install projector IDE certs for SSL"
       command: "/usr/local/bin/projector --config-directory=/etc/projector --cache-directory=/etc/projector --accept-license install-certificate {{ item.config|quote }}"
       args:
         creates: "{{ projector_configs + item.config + '/ssl.properties' }}"
-      with_items: "{{ projector_ides }}"
+      loop: "{{ projector_ides }}"
     - name: "create service files for projector IDEs"
       template:
         src: "templates/projector/service.j2"
         dest: "/etc/systemd/system/projector_{{ item.config }}.service"
       vars: { config: "{{ item.config }}", ide: "{{ item.ide }}" }
-      with_items: "{{ projector_ides }}"
+      loop: "{{ projector_ides }}"
     - name: "increase inotify max user watches"
       lineinfile:
         path: "/etc/sysctl.conf"
@@ -326,7 +333,7 @@
       file:
         path: "{{ item.path }}"
         state: "absent"
-      with_items: "{{ installer_archives.files }}"
+      loop: "{{ installer_archives.files }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -345,13 +352,13 @@
         append: "yes"
         groups: "{{ apache_group }}"
         name: "{{ item.user }}"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
     - name: "add the apache user to the local users' groups"
       user:
         append: "yes"
         groups: "{{ item.user }}"
         name: "{{ apache_group }}"
-      with_items: "{{ server_users }}"
+      loop: "{{ server_users }}"
     - name: "give vagrant user and apache group recursive ownership of {{ server_document_root }} and set the group sticky bit"
       file:
         group: "{{ apache_group }}"
@@ -422,7 +429,7 @@
         permanent: "yes"
         service: "{{ item.name }}"
         state: "{{ item.state }}"
-      with_items:
+      loop:
         - { name: "http", state: "enabled" }
         - { name: "https", state: "enabled" }
         - { name: "mountd", state: "enabled" }
@@ -437,7 +444,7 @@
         permanent: "yes"
         port: "{{ item.port }}"
         state: "{{ item.state }}"
-      with_items:
+      loop:
         - { port: "9999/tcp", state: "enabled" } # projector port
         - { port: "8080/tcp", state: "enabled" } # alt http
         - { port: "8443/tcp", state: "enabled" } # alt https
@@ -518,7 +525,7 @@
         state: "present"
         target: '{{ item.target }}(/.*)?'
       register: "filecontext"
-      with_items:
+      loop:
         - { target: "{{ server_document_root }}", setype: 'httpd_sys_rw_content_t' }
     - name: "apply new SELinux file context to filesystem"
       command: "restorecon -irv {{ server_document_root }}"

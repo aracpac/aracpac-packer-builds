@@ -14,6 +14,7 @@ apache_vhosts:
     extra_parameters: |
       RewriteCond %{HTTP_HOST} !^www\. [NC]
       RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 apache_vhosts_ssl:
   - servername: "null"
     serveralias: "*"
@@ -23,6 +24,7 @@ apache_vhosts_ssl:
     extra_parameters: |
       RewriteCond %{HTTP_HOST} !^www\. [NC]
       RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 
 # Docker settings ######################################################################################################
 docker_service_state: stopped
@@ -46,7 +48,7 @@ nfs_exports:
   - "# see https://linux.die.net/man/5/exports"
   - "# *               - anyone on the network can access this share"
   - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-  - "{{ server_document_root }}    *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)"
+  - "{{ server_document_root }}    *(all_squash,anonuid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].uid }},anongid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].gid }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
 # nginx settings #########################################################################################################
 nginx_remove_default_vhost: "true"
@@ -93,25 +95,32 @@ php_mysql_package: "php-mysqlnd"
 php_opcache_load_comments: "1"
 php_opcache_save_comments: "1"
 php_packages:
-  - "php"
-  - "php-cli"
-  - "php-common"
-  - "php-devel"
-  - "php-gd"
-  - "php-intl"
-  - "php-ldap"
-  - "php-mbstring"
-  - "php-opcache"
+  - "php{{ php_version }}"
+  - "php{{ php_version }}-apcu"
+  - "php{{ php_version }}-bcmath"
+  - "php{{ php_version }}-cli"
+  - "php{{ php_version }}-common"
+  - "php{{ php_version }}-curl"
+  - "php{{ php_version }}-dev"
+  - "php{{ php_version }}-fpm"
+  - "php{{ php_version }}-gd"
+  - "php{{ php_version }}-imap"
+  - "php{{ php_version }}-igbinary"
+  - "php{{ php_version }}-intl"
+  - "php{{ php_version }}-imagick"
+  - "php{{ php_version }}-json"
+  - "php{{ php_version }}-ldap"
+  - "php{{ php_version }}-mbstring"
+  - "php{{ php_version }}-memcache"
+  - "php{{ php_version }}-msgpack"
   - "php-pear"
-  - "php-pecl-apcu"
-  - "php-pecl-igbinary"
-  - "php-pecl-imagick"
-  - "php-pecl-msgpack"
-  - "php-pecl-xdebug3"
-  - "php-pspell"
-  - "php-soap"
-  - "php-xml"
-  - "php-zip"
+  - "php{{ php_version }}-pspell"
+  - "php{{ php_version }}-soap"
+  - "php{{ php_version }}-readline"
+  - "php{{ php_version }}-sqlite3"
+  - "php{{ php_version }}-xml"
+  - "php{{ php_version }}-yaml"
+  - "php{{ php_version }}-zip"
 php_post_max_size: "51M"
 php_session_gc_maxlifetime: "2592000"
 php_session_gc_probability: "1"

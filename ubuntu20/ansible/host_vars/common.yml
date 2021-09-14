@@ -13,6 +13,7 @@ apache_vhosts:
     extra_parameters: |
       RewriteCond %{HTTP_HOST} !^www\. [NC]
       RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 apache_vhosts_ssl:
   - servername: "null"
     serveralias: "*"
@@ -22,6 +23,7 @@ apache_vhosts_ssl:
     extra_parameters: |
       RewriteCond %{HTTP_HOST} !^www\. [NC]
       RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+      ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
 
 # Docker settings ######################################################################################################
 docker_service_state: stopped
@@ -44,7 +46,7 @@ nfs_exports:
   - "# see https://linux.die.net/man/5/exports"
   - "# *               - anyone on the network can access this share"
   - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-  - "{{ server_document_root }}    *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)"
+  - "{{ server_document_root }}    *(all_squash,anonuid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].uid }},anongid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].gid }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
 # nginx settings #########################################################################################################
 nginx_remove_default_vhost: "true"
