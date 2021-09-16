@@ -79,7 +79,7 @@
             synchronize:
                 dest: "/home/{{ item.user }}"
                 src: "files/dotfiles/"
-            loop: "{{ server_users + [server_system_user, { \"user\": \"root\" }] }}"
+            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
             register: "accounts_dotfiles"
             notify: "fix perms"
     handlers:
@@ -135,12 +135,26 @@
                     - "vim"
                     - "unzip"
         -   name: "installing packages via installers"
-            raw: "{{ item }}"
+            shell: "{{ item.command }}"
             args:
-                executable: "/bin/bash"
+                creates: "{{ item.creates }}"
             loop:
-                - "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony" # symfony
-                - "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp" # WordPress
+                - { "command": "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony", creates: "/usr/local/bin/symfony" } # symfony
+                - { "command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp", creates: "/usr/local/bin/wp" } # WordPress
+        -   name: "installing NVM and NPM packages for all users"
+            shell: "cd ~ && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash && source ~/.bashrc && nvm install --lts && npm install -g {{ npm_packages | join(' ') }}"
+            args:
+                creates: "{{ '/home/' if 'root' != item.user else '/' }}{{ item.user }}/.nvm/nvm.sh"
+            become: "true"
+            become_user: "{{ item.user }}"
+            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
+        -   name: "installing rbenv and ruby gems for all users"
+            shell: "cd ~ && curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash && echo -e \"PATH=~/.rbenv/bin:\\$PATH\" >> ~/.bash_profile && rbenv init >> ~/.bash_profile || source ~/.bash_profile && rbenv install $(rbenv install -l | grep '^3' | head -n 1) && gem install {{ ruby_packages | join(' ') }}"
+            args:
+                creates: "{{ '/home/' if 'root' != item.user else '/' }}{{ item.user }}/.rbenv/bin/rbenv"
+            become: "true"
+            become_user: "{{ item.user }}"
+            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -154,6 +168,14 @@
     vars_files:
         - "host_vars/common.yml"
     pre_tasks:
+        -   name: "get vagrant user's uid"
+            getent:
+                database: "passwd"
+                key: "vagrant"
+        -   name: "get vagrant group's uid"
+            getent:
+                database: "group"
+                key: "vagrant"
         -   name: "add postgresql ubuntu repo key"
             apt_key:
                 url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
@@ -184,7 +206,6 @@
         - "geerlingguy.php-memcached"
         - "geerlingguy.java"
         - "geerlingguy.composer"
-        - "geerlingguy.nodejs"
         - "geerlingguy.nfs"
     post_tasks:
         -   name: "installing PostGIS (requires PostgreSQL to be installed first)"

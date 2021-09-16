@@ -88,7 +88,7 @@
     "iso_name": "ubuntu-20.04.3-live-server-amd64.iso",
     "mirror": "http://releases.ubuntu.com",
     "mirror_directory": "20.04",
-    "vb_cpus": "8",
+    "vb_cpus": "16",
     "vb_disk_size": "512000",
     "vb_memory": "8192",
     "version": "1.4.0"

@@ -7,7 +7,6 @@
 - src: "geerlingguy.mysql"
 - src: "geerlingguy.nfs"
 - src: "geerlingguy.nginx"
-- src: "geerlingguy.nodejs"
 - src: "geerlingguy.php"
 - src: "geerlingguy.php-memcached"
 - src: "geerlingguy.php-mysql"

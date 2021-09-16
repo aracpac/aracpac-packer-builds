@@ -46,17 +46,15 @@ nfs_exports:
     - "# see https://linux.die.net/man/5/exports"
     - "# *               - anyone on the network can access this share"
     - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-    - "{{ server_document_root }}    *(all_squash,anonuid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].uid }},anongid={{ (created_users.results | selectattr('item.user', 'eq', 'vagrant') | list)[0].gid }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
+    - "{{ server_document_root }}    *(all_squash,anonuid={{ getent_passwd.vagrant[1] }},anongid={{ getent_group.vagrant[1] }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
-# nginx settings #########################################################################################################
+# nginx settings #######################################################################################################
 nginx_remove_default_vhost: "true"
 nginx_service_enabled: "no"
 nginx_service_state: "stopped"
 
-# NodeJS settings ######################################################################################################
-npm_config_prefix: "/usr"
-nodejs_install_npm_user: "root"
-nodejs_npm_global_packages:
+# NPM settings #########################################################################################################
+npm_packages:
     - "diff-so-fancy"
     - "rome"
     - "sass"
@@ -137,6 +135,10 @@ postgresql_users:
 projector_ides:
     - { config: "phpstorm", ide: "phpstorm 2021.1.4" }
 projector_configs: "/etc/projector/configs/"
+
+# Ruby settings ########################################################################################################
+ruby_packages:
+    - "bundler"
 
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
