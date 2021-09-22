@@ -9,14 +9,19 @@ frameworks, including:
 * ✅ ASP.Net
 
 ## Stack summary:
-* Linux 4.18.0-315.el8.x86_64
-* Apache/2.4.37
-* mysql 15.1 Distrib 10.3.28-MariaDB
-* mongo
-* psql (PostgreSQL) 13.3 and PostGIS 3.1
-* PHP 8.0.8 (cli) (built: Jun 29 2021 07:41:19)
-* Xdebug v3.0.4
-* varnish-6.6.1 revision e6a8c860944c4f6a7e1af9f40674ea78bbdcdc66
+* Apache 2.4.41
+* dotnet 5.0.401
+* Java 8 / 11 / 16
+* Linux 5.4.0-86-generic
+* MongoDB 5.0.3
+* MySQL 8.0.26
+* Node 14.17.6 via NVM
+* PHP 8.0.10
+* PostgreSQL 13.4 and PostGIS 3.1
+* Python 3.8.10
+* Ruby 3.0.2 via RVM
+* Varnish 6.6.1
+* Xdebug 3.0.4
 
 ## 5 minute quickstart
 The quickstart assumes you've:
