@@ -1,4 +1,4 @@
-# About
+## Full Stack Web Development Environment
 This Ubuntu 20.04.3 LTS virtual machine is preconfigured with support for a variety of full stack web development
 frameworks, including:
 * ✅ LAMP: Laravel / Symfony / CakePHP / CodeIgnitor

@@ -82,7 +82,7 @@
   ],
   "variables": {
     "checksum_type": "sha256",
-    "image_name": "centos8",
+    "image_name": "centos8-stream",
     "iso_checksum": "727d5f9deb5d8301cb30fb4eb7ddf8704cd0fbdc4ef632bb0ee5a32e3cf35fc3",
     "iso_name": "CentOS-Stream-8-x86_64-20210907-dvd1.iso",
     "mirror": "http://mirrors.kernel.org/centos",
