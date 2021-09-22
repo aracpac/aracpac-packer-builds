@@ -23,7 +23,7 @@ The quickstart assumes you've:
 
 1) already installed [vagrant](https://www.vagrantup.com/docs/installation/) and 
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads) (if you need help with this step, navigate to the AracPac 
-[Vagrantfile repository](https://github.com/aracpac/aracpac-vagrantfiles) and checkout the __Getting Started__ 
+[Vagrantfile repository](https://github.com/aracpac/aracpac-vagrantfiles) and checkout the __Beginner's Guide__ 
 section in the README)
 3) downloaded the [Vagrantfile optimized for this box](https://github.com/aracpac/aracpac-vagrantfiles/blob/v1.4.0/centos_stream/Vagrantfile) 
 to an empty directory
