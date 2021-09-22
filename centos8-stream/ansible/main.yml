@@ -50,6 +50,7 @@
                 createhome: "yes"
                 groups:
                     - "wheel"
+                    - "vboxsf"
                 name: "{{ item.user }}"
                 password: "{{ item.pass | password_hash('sha512') }}"
                 shell: "/bin/bash"
