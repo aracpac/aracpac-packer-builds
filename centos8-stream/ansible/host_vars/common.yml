@@ -10,27 +10,39 @@ apache_state: "stopped"
 apache_vhosts:
     -   servername: "null"
         serveralias: "*"
-        documentroot: "{{ server_document_root }}"
+        documentroot: "${documentroot}"
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php-fpm/www.sock|fcgi://localhost${documentroot}"
 apache_vhosts_ssl:
     -   servername: "null"
         serveralias: "*"
-        documentroot: "{{ server_document_root }}"
+        documentroot: "${documentroot}"
         certificate_file: "/etc/ssl/dev.crt"
         certificate_key_file: "/etc/ssl/dev.pem"
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "fcgi://127.0.0.1:9000{{ server_document_root }}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php-fpm/www.sock|fcgi://localhost${documentroot}"
+apache_global_vhost_settings: |
+    DirectoryIndex index.php index.html
+    Define documentroot {{ server_document_root }}
 
 # Docker settings ######################################################################################################
-docker_service_state: stopped
-docker_service_enabled: no
+docker_service_state: "stopped"
+docker_service_enabled: "no"
 docker_users:
-    - vagrant
+    - "vagrant"
+
+# Java settings ########################################################################################################
+java_packages:
+    - "java-1.8.0-openjdk"
+    - "java-1.8.0-openjdk-devel"
+    - "java-11-openjdk"
+    - "java-11-openjdk-devel"
+    - "java-latest-openjdk"
+    - "java-latest-openjdk-devel"
 
 # MySQL settings #######################################################################################################
 mysql_user_home: "/root"
@@ -55,36 +67,27 @@ nginx_remove_default_vhost: "true"
 
 # NPM settings #########################################################################################################
 npm_packages:
+    - "@angular/cli"
+    - "@vue/cli"
+    - "@vue/cli-service-global"
+    - "create-react-app"
     - "diff-so-fancy"
+    - "ember-cli"
+    - "express-generator"
+    - "pm2"
     - "rome"
     - "sass"
-    - "uglifycss"
-    - "uglify-js"
+    - "serve"
     - "webpack"
     - "yarn"
 
 # PHP settings #########################################################################################################
+composer_global_packages:
+    - { name: "laravel/installer" }
+composer_home_path: "/home/vagrant/.composer"
+composer_home_owner: "vagrant"
+composer_home_group: "vagrant"
 php_date_timezone: "{{ server_timezone }}"
-php_disable_functions: [ ] # or use the below to tighten it up
-#  - "pcntl_alarm"
-#  - "pcntl_fork"
-#  - "pcntl_waitpid"
-#  - "pcntl_wait"
-#  - "pcntl_wifexited"
-#  - "pcntl_wifstopped"
-#  - "pcntl_wifsignaled"
-#  - "pcntl_wexitstatus"
-#  - "pcntl_wtermsig"
-#  - "pcntl_wstopsig"
-#  - "pcntl_signal_dispatch"
-#  - "pcntl_get_last_error"
-#  - "pcntl_strerror"
-#  - "pcntl_sigprocmask"
-#  - "pcntl_sigwaitinfo"
-#  - "pcntl_sigtimedwait"
-#  - "pcntl_exec"
-#  - "pcntl_getpriority"
-#  - "pcntl_setpriority"
 php_enablerepo: "epel"
 php_html_errors: "false"
 php_memcached_package: "php-memcached"
@@ -99,7 +102,7 @@ php_packages:
     - "php-cli"
     - "php-common"
     - "php-curl"
-    - "php-dev"
+    - "php-devel"
     - "php-fpm"
     - "php-gd"
     - "php-imap"
@@ -109,6 +112,7 @@ php_packages:
     - "php-json"
     - "php-ldap"
     - "php-mbstring"
+    - "php-mcrypt"
     - "php-memcache"
     - "php-msgpack"
     - "php-pear"
@@ -116,6 +120,7 @@ php_packages:
     - "php-soap"
     - "php-readline"
     - "php-sqlite3"
+    - "php-xdebug"
     - "php-xml"
     - "php-yaml"
     - "php-zip"
@@ -138,12 +143,19 @@ postgresql_users:
 
 # Projector settings ###################################################################################################
 projector_ides:
-    - { config: "phpstorm", ide: "phpstorm 2021.1.4" }
+    - { config: "phpstorm", ide: "phpstorm 2021.2.2" }
 projector_configs: "/etc/projector/configs/"
+
+# Python settings ######################################################################################################
+pip_packages:
+    - "Django"
+    - "virtualenv"
 
 # Ruby settings ########################################################################################################
 ruby_packages:
     - "bundler"
+    - "mailcatcher"
+    - "rails"
 
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
@@ -151,6 +163,7 @@ server_document_root: "/var/www"
 server_timezone: "America/Vancouver"
 server_users:
     - { user: "vagrant", pass: "vagrant" }
+server_users_and_root_user: "{{ server_users + [{ \"user\": \"root\" }] }}"
 
 # Varnish settings #####################################################################################################
 varnish_default_backend_host: "127.0.0.1"

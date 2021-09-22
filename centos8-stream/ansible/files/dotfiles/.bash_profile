@@ -1,3 +1,7 @@
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
 if [ $(which byobu) ]; then
   export BYOBU_PREFIX=/usr/local
   _byobu_sourced=1 . /usr/local/bin/byobu-launch 2>/dev/null || true
@@ -55,4 +59,4 @@ command -v gdircolors >/dev/null 2>&1 || alias gdircolors="dircolors"
 eval "$(gdircolors -b ~/.dircolors)"
 
 # PATH
-PATH=~/go/bin:$PATH
+export PATH=~/go/bin:$PATH

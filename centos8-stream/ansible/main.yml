@@ -81,12 +81,14 @@
             synchronize:
                 dest: "/home/{{ item.user }}"
                 src: "files/dotfiles/"
-            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
+            loop: "{{ server_users }}"
             register: "accounts_dotfiles"
             notify: "fix perms"
     handlers:
         -   name: "fix perms"
             command: "chown -R {{ item }}:{{ item }} /home/{{ item }}"
+            args:
+                warn: "false"
             loop: "{{ accounts_dotfiles.results | selectattr('item.user', '!=', 'root') | selectattr('changed', '==', true) | map(attribute='item.user') | list }}"
 ########################################################################################################################
 
@@ -103,19 +105,27 @@
     roles:
         - "geerlingguy.repo-epel"
         - "geerlingguy.repo-remi"
+    pre_tasks:
+        -   name: "install mongo repo"
+            shell: 'echo -e "[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc" > /etc/yum.repos.d/mongodb-org-5.0.repo'
+            args:
+                creates: "/etc/yum.repos.d/mongodb-org-5.0.repo"
     tasks:
         # See the default CentOS 8 package list at http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/
         -   name: "installing packages from package manager"
             dnf:
                 name:
                     - "acl"
+                    - "aspnetcore-runtime-5.0"
                     - "atop"
                     - "bind-utils"
                     - "byobu"
                     - "clang"
                     - "curl"
-                    - "drpm"
                     - "@Development tools"
+                    - "dotnet-sdk-5.0"
+                    - "dotnet-runtime-5.0"
+                    - "drpm"
                     - "firewalld"
                     - "git"
                     - "golang"
@@ -123,38 +133,86 @@
                     - "ImageMagick"
                     - "ImageMagick-devel"
                     - "iotop"
+                    - "libmcrypt-devel"
+                    - "maven"
+                    - "mongodb-org"
                     - "nmap"
                     - "policycoreutils-python-utils"
                     - "python3"
+                    - "python3-virtualenv"
                     - "pv"
                     - "vim"
                     - "rustc"
                     - "sendmail-cf"
+                    - "sqlite"
+                    - "sqlite-devel"
+                    - "subversion"
                     - "supervisor"
                     - "tree"
                     - "vim"
                     - "wget"
+                    - "zip"
         -   name: "installing packages via installers"
             shell: "{{ item.command }}"
             args:
                 creates: "{{ item.creates }}"
+                executable: "/bin/bash"
+                warn: "false"
             loop:
                 - { "command": "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony", creates: "/usr/local/bin/symfony" } # symfony
                 - { "command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp", creates: "/usr/local/bin/wp" } # WordPress
         -   name: "installing NVM and NPM packages for all users"
-            shell: "cd ~ && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash && source ~/.bashrc && nvm install --lts && npm install -g {{ npm_packages | join(' ') }}"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - "cd ~"
+                    - "curl --silent --location https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
+                    - "bash -ilc '. ~/.bashrc && nvm install --lts'" # force bash interactive mode so .bashrc is read and the nvm and npm commands are recognized
+                    - "bash -ilc '. ~/.bashrc && yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
+                    - "touch ~/.nvm/.installed"
+            shell: "{{ item[1] }}"
             args:
-                creates: "{{ '/home/' if 'root' != item.user else '/' }}{{ item.user }}/.nvm/nvm.sh"
+                creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.nvm/.installed"
+                executable: "/bin/bash"
+                warn: "false"
             become: "true"
-            become_user: "{{ item.user }}"
-            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
         -   name: "installing rbenv and ruby gems for all users"
-            shell: "cd ~ && curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash && echo -e \"PATH=~/.rbenv/bin:\\$PATH\" >> ~/.bash_profile && rbenv init >> ~/.bash_profile || source ~/.bash_profile && rbenv install $(rbenv install -l | grep '^3' | head -n 1) && gem install {{ ruby_packages | join(' ') }}"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - "cd ~"
+                    - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
+                    - 'echo -e "\nPATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
+                    - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
+                    - "bash -ilc '. ~/.bashrc && rbenv install -f $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bashrc && rbenv global $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bashrc && gem install {{ ruby_packages | join(' ') }}'"
+                    - "touch ~/.rbenv/.installed"
+            shell: "{{ item[1] }}"
             args:
-                creates: "{{ '/home/' if 'root' != item.user else '/' }}{{ item.user }}/.rbenv/bin/rbenv"
+                creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.rbenv/.installed"
+                executable: "/bin/bash"
+                warn: "false"
             become: "true"
-            become_user: "{{ item.user }}"
-            loop: "{{ server_users + [{ \"user\": \"root\" }] }}"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
+        -   name: "installing per-user packages via installers"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - { "command": "curl --silent --location https://get.sdkman.io | bash", creates: "~/.sdkman/bin/sdkman-init.sh" } # SDKMAN
+                    - { "command": "bash -ilc '. ~/.bashrc && sdk install springboot'", creates: "~/.sdkman/candidates/springboot/current/bin/spring" } # spring
+                    - { "command": "bash -ilc '. ~/.bashrc && sdk install gradle'", creates: "~/.sdkman/candidates/gradle/current/bin/gradle" } # gradle
+            shell: "{{ item[1].command }}"
+            args:
+                creates: "{{ item[1].creates }}"
+                executable: "/bin/bash"
+                warn: "false"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -229,8 +287,23 @@
         - "geerlingguy.java"
         - "geerlingguy.composer"
         - "geerlingguy.nfs"
-    post_tasks:
     tasks:
+        -   name: "find java 11 full path"
+            shell: "update-alternatives --list | grep java_sdk_11_openjdk | awk '{print $3}'"
+            register: "java_11_openjdk_path"
+            run_once: "true"
+        -   set_fact:
+                java_11_openjdk_path: "{{ java_11_openjdk_path.stdout }}"
+        -   name: "Set Java 11 as default"
+            alternatives:
+                name: "java"
+                link: "/usr/bin/java"
+                path: "{{ java_11_openjdk_path }}/bin/java"
+        -   name: "Set Javac 11 as default"
+            alternatives:
+                name: "javac"
+                link: "/usr/bin/javac"
+                path: "{{ java_11_openjdk_path }}/bin/javac"
         -   name: "fix bad directive in nodesource repo" # TODO: remove when upstream is fixed
             lineinfile:
                 path: "/etc/yum.repos.d/nodesource-el8.repo"
@@ -249,7 +322,7 @@
             replace:
                 path: "/etc/httpd/conf/httpd.conf"
                 regexp: '(.*)(\/var\/www\/html)(.*)'
-                replace: '\1/var/www\3'
+                replace: '\1{{ server_document_root }}\3'
             notify: "restart apache"
         -   name: "install varnish devel"
             dnf:
@@ -307,6 +380,28 @@
                 path: "/tmp/vmods"
                 state: "absent"
             when: "varnish_build_vmods"
+        -   name: "install PIP packages"
+            pip:
+                name: "{{ item[0] }}"
+                executable: "pip3"
+                extra_args: "--user"
+            become: "true"
+            become_user: "{{ item[1].user }}"
+            loop: "{{ pip_packages | product(server_users) | list }}"
+        -   name: "add some environmental variables and update PATH"
+            vars:
+                local_paths:
+                    - "export JAVA_HOME=/usr/lib/jvm/java/"
+                    - "export PATH=$HOME/.composer/vendor/bin/:$PATH"
+                    - "export PATH=$HOME/.local/bin/:$PATH"
+                    - "export PATH=$JAVA_HOME/bin:$PATH"
+            lineinfile:
+                path: "~/.bash_profile"
+                state: "present"
+                line: "{{ item[1] }}"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ server_users | product(local_paths) | list }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -466,9 +561,18 @@
                 port: "{{ item.port }}"
                 state: "{{ item.state }}"
             loop:
-                - { port: "9999/tcp", state: "enabled" } # projector port
+                - { port: "1080/tcp", state: "enabled" } # mailcatcher
+                - { port: "3000/tcp", state: "enabled" } # node / rails dev servers
+                - { port: "4200/tcp", state: "enabled" } # ng
+                - { port: "5000/tcp", state: "enabled" } # serve
+                - { port: "5001/tcp", state: "enabled" } # dotnet
+                - { port: "8000/tcp", state: "enabled" } # django / symfony
                 - { port: "8080/tcp", state: "enabled" } # alt http
                 - { port: "8443/tcp", state: "enabled" } # alt https
+                - { port: "9999/tcp", state: "enabled" } # projector port
+                - { port: "27017/tcp", state: "enabled" } # mongodb
+                - { port: "27018/tcp", state: "enabled" } # mongodb
+                - { port: "27019/tcp", state: "enabled" } # mongodb
                 - { port: "36389/tcp", state: "enabled" } # lockd windows
                 - { port: "36389/udp", state: "enabled" } # lockd mac
         -   name: "reload firewalld"
@@ -511,35 +615,41 @@
     vars_files:
         - "host_vars/common.yml"
     tasks:
+        -   name: "add custom selinux policies directory"
+            file:
+                path: "/usr/share/selinux/policies"
+                state: "directory"
+        -   name: "copy custom policies"
+            synchronize:
+                dest: "/usr/share/selinux/policies/{{ item }}"
+                src: "files/selinux/{{ item }}"
+            loop:
+                - "mongodb_cgroup_memory.te"
+                - "mongodb_proc_net.te"
+        -   name: "compile and enable custom policies"
+            shell: "checkmodule -M -m -o {{ item }}.mod {{ item }}.te && semodule_package -o {{ item }}.pp -m {{ item }}.mod && semodule -i {{ item }}.pp"
+            args:
+                chdir: "/usr/share/selinux/policies/"
+                creates: "/usr/share/selinux/policies/{{ item }}.pp"
+            loop:
+                - "mongodb_cgroup_memory"
+                - "mongodb_proc_net"
         -   name: "Set SELinux permissive"
             selinux:
                 policy: "targeted"
                 state: "permissive"
-        -   name: "Take Varnish out of SELinux"
-            selinux_permissive:
-                name: "varnishd_t"
-                permissive: "true"
-        -   name: "enable SELinux httpd network connections"
+        -   name: "enable SELinux httpd flags"
             seboolean:
-                name: "httpd_can_network_connect"
+                name: "{{ item }}"
                 persistent: "yes"
                 state: "yes"
-        -   name: "enable SELinux httpd sendmail"
-            seboolean:
-                name: "httpd_can_sendmail"
-                persistent: "yes"
-                state: "yes"
-        -   name: "enable SELinux httpd network connections to memcache"
-            seboolean:
-                name: "httpd_can_network_memcache"
-                persistent: "yes"
-                state: "yes"
-        -   name: "enable SELinux httpd exec calls"
-            seboolean:
-                name: "httpd_execmem"
-                persistent: "yes"
-                state: "yes"
-        -   name: "set selinux policy for {{ server_document_root }}"
+            loop:
+                - "httpd_can_network_connect"
+                - "httpd_can_network_memcache"
+                - "httpd_can_sendmail"
+                - "httpd_execmem"
+                - "varnishd_connect_any"
+        -   name: "set selinux policy for certain apache directories"
             sefcontext:
                 reload: "yes"
                 setype: "{{ item.setype }}"
@@ -548,6 +658,7 @@
             register: "filecontext"
             loop:
                 - { target: "{{ server_document_root }}", setype: 'httpd_sys_rw_content_t' }
+                - { target: "/var/log/httpd", setype: 'httpd_log_t' }
         -   name: "apply new SELinux file context to filesystem"
             command: "restorecon -irv {{ server_document_root }}"
 ########################################################################################################################
