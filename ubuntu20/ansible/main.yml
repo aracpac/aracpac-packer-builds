@@ -112,7 +112,7 @@
             args:
                 creates: "/etc/apt/sources.list.d/microsoft-prod.list"
         -   name: "install mongo repo"
-            shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add - && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list'
+            shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add - && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list && apt update -y'
             args:
                 creates: "/etc/apt/sources.list.d/mongodb-org-5.0.list"
     tasks:
@@ -135,6 +135,8 @@
                     - "imagemagick"
                     - "iotop"
                     - "libmcrypt-dev"
+                    - "libssl-dev"
+                    - "libsqlite3-dev"
                     - "maven"
                     - "mongodb-org"
                     - "net-tools"
@@ -188,9 +190,9 @@
                     - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
                     - 'echo -e "\nPATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
                     - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
-                    - "bash -ilc '. ~/.bashrc && rbenv install -f $(rbenv install -l | grep '^3' | head -n 1)'"
-                    - "bash -ilc '. ~/.bashrc && rbenv global $(rbenv install -l | grep '^3' | head -n 1)'"
-                    - "bash -ilc '. ~/.bashrc && gem install {{ ruby_packages | join(' ') }}'"
+                    - "bash -ilc '. ~/.bash_profile && rbenv install -f $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bash_profile && rbenv global $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bash_profile && gem install {{ ruby_packages | join(' ') }}'"
                     - "touch ~/.rbenv/.installed"
             shell: "{{ item[1] }}"
             args:
@@ -273,7 +275,7 @@
             register: "java_11_openjdk_binary"
             run_once: "true"
         -   set_fact:
-                java_11_openjdk_path: "{{ java_11_openjdk_binary.stdout }}"
+                java_11_openjdk_binary: "{{ java_11_openjdk_binary.stdout }}"
         -   name: "Set Java 11 as default"
             alternatives:
                 name: "java"

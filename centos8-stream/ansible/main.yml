@@ -186,9 +186,9 @@
                     - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
                     - 'echo -e "\nPATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
                     - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
-                    - "bash -ilc '. ~/.bashrc && rbenv install -f $(rbenv install -l | grep '^3' | head -n 1)'"
-                    - "bash -ilc '. ~/.bashrc && rbenv global $(rbenv install -l | grep '^3' | head -n 1)'"
-                    - "bash -ilc '. ~/.bashrc && gem install {{ ruby_packages | join(' ') }}'"
+                    - "bash -ilc '. ~/.bash_profile && rbenv install -f $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bash_profile && rbenv global $(rbenv install -l | grep '^3' | head -n 1)'"
+                    - "bash -ilc '. ~/.bash_profile && gem install {{ ruby_packages | join(' ') }}'"
                     - "touch ~/.rbenv/.installed"
             shell: "{{ item[1] }}"
             args:
