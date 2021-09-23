@@ -42,21 +42,21 @@
   "provisioners": [
     {
       "expect_disconnect": true,
-      "only": [
-        "virtualbox-iso"
-      ],
-      "scripts": [
-        "scripts/virtualbox.sh"
-      ],
-      "type": "shell"
-    },
-    {
-      "expect_disconnect": true,
       "scripts": [
         "scripts/update.sh",
         "scripts/ansible.sh",
         "scripts/sshd.sh",
         "scripts/networking.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "expect_disconnect": true,
+      "only": [
+        "virtualbox-iso"
+      ],
+      "scripts": [
+        "scripts/virtualbox.sh"
       ],
       "type": "shell"
     },
@@ -87,9 +87,9 @@
     "iso_name": "CentOS-Stream-8-x86_64-20210907-dvd1.iso",
     "mirror": "http://mirrors.kernel.org/centos",
     "mirror_directory": "8-stream/isos/x86_64",
-    "vb_cpus": "12",
+    "vb_cpus": "2",
     "vb_disk_size": "512000",
-    "vb_memory": "8192",
+    "vb_memory": "2048",
     "version": "1.4.0"
   }
 }
