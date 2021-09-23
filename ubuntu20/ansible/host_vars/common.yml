@@ -13,7 +13,7 @@ apache_vhosts:
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php-fpm/www.sock|fcgi://localhost${documentroot}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.0-fpm.sock|fcgi://localhost${documentroot}"
 apache_vhosts_ssl:
     -   servername: "null"
         serveralias: "*"
@@ -23,7 +23,7 @@ apache_vhosts_ssl:
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php-fpm/www.sock|fcgi://localhost${documentroot}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.0-fpm.sock|fcgi://localhost${documentroot}"
 apache_global_vhost_settings: |
     DirectoryIndex index.php index.html
     Define documentroot {{ server_document_root }}

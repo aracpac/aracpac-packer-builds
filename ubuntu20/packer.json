@@ -91,7 +91,7 @@
     "vb_cpus": "2",
     "vb_disk_size": "512000",
     "vb_memory": "2048",
-    "version": "1.4.0"
+    "version": "1.4.1"
   }
 }
 
