@@ -39,7 +39,7 @@ The quickstart assumes you've:
    [Vagrantfile repository](https://github.com/aracpac/aracpac-vagrantfiles) and checkout the __Beginner's Guide__
    section in the README)
 2. downloaded
-   the [Vagrantfile optimized for this box](https://github.com/aracpac/aracpac-vagrantfiles/blob/v1.4.0/centos_stream/Vagrantfile)
+   the [Vagrantfile optimized for this box](https://raw.githubusercontent.com/aracpac/aracpac-vagrantfiles/v2.0.0/ubuntu22/Vagrantfile)
    to an empty directory
 3. run `vagrant up` from a command shell within that directory
 4. run `vagrant ssh` to connect to the guest machine
