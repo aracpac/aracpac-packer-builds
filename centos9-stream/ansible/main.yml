@@ -1,0 +1,651 @@
+# Run locally like:
+#   ansible-playbook -c local -i localhost, main.yml
+
+########################################################################################################################
+# Prepare the server by adding any files and configuration that are expected by later steps ############################
+########################################################################################################################
+-   name: "preparing the server"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "prepare_server"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "generate an OpenSSL private key"
+            openssl_privatekey:
+                path: "/etc/ssl/dev.pem"
+        -   name: "generate an OpenSSL Certificate Signing Request"
+            openssl_csr:
+                common_name: "*.local"
+                country_name: "CA"
+                email_address: "root@dev.local"
+                extended_key_usage: "serverAuth"
+                key_usage: "digitalSignature"
+                organization_name: "Dev"
+                path: "/etc/ssl/dev.csr"
+                privatekey_path: "/etc/ssl/dev.pem"
+                subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
+            with_dict:
+                dns_server:
+                    - "*.*.local"
+        -   name: "sign the CSR file as a CA to turn it into a certificate"
+            openssl_certificate:
+                csr_path: "/etc/ssl/dev.csr"
+                path: "/etc/ssl/dev.crt"
+                privatekey_path: "/etc/ssl/dev.pem"
+                provider: "selfsigned"
+                selfsigned_not_after: "+730d" # this is the maximum valid length
+        -   name: "enable the dynamic CA configuration feature"
+            command:
+                cmd: "update-ca-trust force-enable"
+        -   name: "ensure that {{ server_document_root }} exists"
+            file:
+                path: "{{ server_document_root }}"
+                recurse: "yes"
+                state: "directory"
+        -   name: "create server users and add them to the wheel group"
+            user:
+                append: "yes"
+                createhome: "yes"
+                groups:
+                    - "wheel"
+                    - "vboxsf"
+                name: "{{ item.user }}"
+                password: "{{ item.pass | password_hash('sha512') }}"
+                shell: "/bin/bash"
+                state: "present"
+                update_password: "on_create"
+            loop: "{{ server_users }}"
+            register: "created_users"
+        -   name: "add a ~/.ssh folder for each user"
+            file:
+                dest: "/home/{{ item.user }}/.ssh"
+                state: "directory"
+                owner: "{{ item.user }}"
+                group: "{{ item.user }}"
+            loop: "{{ server_users }}"
+        -   name: "add the Vagrant insecure key to each user's ~/.ssh/authorized_keys file"
+            get_url:
+                url: "https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub"
+                dest: "/home/{{ item.user }}/.ssh/authorized_keys"
+                group: "{{ item.user }}"
+                owner: "{{ item.user }}"
+            loop: "{{ server_users }}"
+        -   name: "enable passwordless sudo"
+            copy:
+                dest: "/etc/sudoers.d/99_{{ item.user }}"
+                content: "{{ item.user }} ALL=(ALL) NOPASSWD:ALL"
+            loop: "{{ server_users }}"
+        -   name: "add dotfiles to each user's user directory"
+            no_log: "true"
+            synchronize:
+                dest: "/home/{{ item.user }}"
+                src: "files/dotfiles/"
+            loop: "{{ server_users }}"
+            register: "accounts_dotfiles"
+            notify: "fix perms"
+    handlers:
+        -   name: "fix perms"
+            command: "chown -R {{ item }}:{{ item }} /home/{{ item }}"
+            args:
+                warn: "false"
+            loop: "{{ accounts_dotfiles.results | selectattr('item.user', '!=', 'root') | selectattr('changed', '==', true) | map(attribute='item.user') | list }}"
+########################################################################################################################
+
+########################################################################################################################
+# Install packages that don't require configuration ####################################################################
+########################################################################################################################
+-   name: "installing packages"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "install_packages"
+    vars_files:
+        - "host_vars/common.yml"
+    roles:
+        - "geerlingguy.repo-epel"
+        - "geerlingguy.repo-remi"
+    pre_tasks:
+#         # TODO: add this back when mongo starts building for rhel9
+#         -   name: "install mongo repo"
+#             shell: 'echo -e "[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc" > /etc/yum.repos.d/mongodb-org-5.0.repo'
+#             args:
+#                 creates: "/etc/yum.repos.d/mongodb-org-5.0.repo"
+    tasks:
+        # See the default CentOS 9 Stream package list at http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/Packages/
+        -   name: "installing packages from package manager"
+            dnf:
+                name:
+                    - "aspnetcore-runtime-6.0"
+                    - "atop"
+                    - "bind-utils"
+                    - "clang"
+                    - "@Development tools"
+                    - "dotnet-sdk-6.0"
+                    - "dotnet-runtime-6.0"
+                    - "git"
+                    - "golang"
+                    - "htop"
+                    - "ImageMagick"
+                    - "ImageMagick-devel"
+                    - "iotop"
+                    - "libffi-devel" # rbenv dep
+                    - "libmcrypt-devel"
+                    - "libyaml-devel" # rbenv dep
+                    - "maven"
+#                     - "mongodb-org" # TODO: add this back when mongo starts building for rhel9
+                    - "neofetch"
+                    - "nmap"
+                    - "policycoreutils-python-utils"
+                    - "postfix"
+                    - "python3"
+                    - "python3-pip"
+                    - "python3-virtualenv"
+                    - "pv"
+                    - "vim"
+                    - "rustc"
+                    - "readline-devel" # rbenv dep
+                    - "sendmail-cf"
+                    - "sqlite"
+                    - "sqlite-devel"
+                    - "subversion"
+                    - "supervisor"
+                    - "tree"
+                    - "vim"
+        -   name: "Add AracPac ASCII logo"
+            copy:
+                src: "templates/neofetch/aracpac-ascii"
+                dest: "/etc/aracpac-ascii"
+                owner: "root"
+                group: "root"
+                mode: "0644"
+        -   name: "Set server MOTD"
+            lineinfile:
+                path: "/etc/profile"
+                state: "present"
+                line: "/usr/bin/neofetch --source /etc/aracpac-ascii"
+        -   name: "installing packages via installers"
+            shell: "{{ item.command }}"
+            args:
+                creates: "{{ item.creates }}"
+                executable: "/bin/bash"
+                warn: "false"
+            loop:
+                - { "command": "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony", creates: "/usr/local/bin/symfony" } # symfony
+                - { "command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp", creates: "/usr/local/bin/wp" } # WordPress
+        -   name: "installing NVM and NPM packages for all users"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - "cd ~"
+                    - "curl --silent --location https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
+                    - "bash -ilc '. ~/.bashrc && nvm install --lts'" # force bash interactive mode so .bashrc is read and the nvm and npm commands are recognized
+                    - "bash -ilc '. ~/.bashrc && yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
+                    - "touch ~/.nvm/.installed"
+            shell: "{{ item[1] }}"
+            args:
+                creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.nvm/.installed"
+                executable: "/bin/bash"
+                warn: "false"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
+        -   name: "installing rbenv and ruby gems for all users"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - "cd ~"
+                    - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
+                    - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
+                    - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
+                    - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
+                    - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
+                    - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
+                    - "touch ~/.rbenv/.installed"
+            shell: "{{ item[1] }}"
+            args:
+                creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.rbenv/.installed"
+                executable: "/bin/bash"
+                warn: "false"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
+        -   name: "installing per-user packages via installers"
+            vars:
+                local_users: "{{ server_users }}"
+                local_commands:
+                    - { "command": "curl --silent --location https://get.sdkman.io | bash", creates: "~/.sdkman/bin/sdkman-init.sh" } # SDKMAN
+                    - { "command": "bash -ilc '. ~/.bashrc && sdk install springboot'", creates: "~/.sdkman/candidates/springboot/current/bin/spring" } # spring
+                    - { "command": "bash -ilc '. ~/.bashrc && sdk install gradle'", creates: "~/.sdkman/candidates/gradle/current/bin/gradle" } # gradle
+            shell: "{{ item[1].command }}"
+            args:
+                creates: "{{ item[1].creates }}"
+                executable: "/bin/bash"
+                warn: "false"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ local_users | product(local_commands) | list }}"
+########################################################################################################################
+
+########################################################################################################################
+# Install roles (packages that do require configuration) ###############################################################
+########################################################################################################################
+-   name: "installing roles"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "install_roles"
+    vars_files:
+        - "host_vars/common.yml"
+    pre_tasks:
+        -   name: "get vagrant user's uid"
+            getent:
+                database: "passwd"
+                key: "vagrant"
+        -   name: "get vagrant group's uid"
+            getent:
+                database: "group"
+                key: "vagrant"
+        -   name: "ensure postgresql module file is present"
+            file:
+                path: "/etc/dnf/modules.d/postgresql.module"
+                state: "touch"
+                mode: "u+rw,g-wx,o-rwx"
+                modification_time: "preserve"
+                access_time: "preserve"
+        -   name: "disable postgresql module"
+            lineinfile:
+                path: "/etc/dnf/modules.d/postgresql.module"
+                state: "present"
+                line: "{{ item }}"
+            loop:
+                - "[postgresql]"
+                - "name=postgresql"
+                - "stream="
+                - "profiles="
+                - "state=disabled"
+        -   name: "add postgresql rhel repo key"
+            ansible.builtin.rpm_key:
+                state: "present"
+                key: "{{ item }}"
+            loop:
+                - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-13"
+                - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-14"
+                - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-15"
+        -   name: "install the postgresql rhel repo"
+            dnf:
+                name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+                state: "present"
+    roles:
+        - "geerlingguy.postgresql"
+        - "geerlingguy.apache"
+        - "geerlingguy.php-versions"
+        - "geerlingguy.php"
+        - "geerlingguy.apache-php-fpm"
+        - "geerlingguy.nginx"
+        - "geerlingguy.docker"
+        - "geerlingguy.varnish"
+        - "geerlingguy.mysql"
+        - "geerlingguy.php-mysql"
+        - "geerlingguy.php-pgsql"
+        - "geerlingguy.memcached"
+        - "geerlingguy.php-memcached"
+        - "geerlingguy.java"
+        - "geerlingguy.composer"
+        - "geerlingguy.nfs"
+    tasks:
+        -   name: "find java 17 full path"
+            shell: "update-alternatives --list | grep java_sdk_17_openjdk | awk '{print $3}'"
+            register: "java_17_openjdk_path"
+            run_once: "true"
+        -   set_fact:
+                java_17_openjdk_path: "{{ java_17_openjdk_path.stdout }}"
+        -   name: "Set Java 17 as default"
+            alternatives:
+                name: "java"
+                link: "/usr/bin/java"
+                path: "{{ java_17_openjdk_path }}/bin/java"
+        -   name: "Set Javac 17 as default"
+            alternatives:
+                name: "javac"
+                link: "/usr/bin/javac"
+                path: "{{ java_17_openjdk_path }}/bin/javac"
+#         # TODO: add this back when postgis becomes available
+#         -   name: "installing PostGIS (requires PostgreSQL to be installed first)"
+#             dnf:
+#                 name:
+#                     - "postgis31_14"
+        -   name: "create xdebug log file"
+            file:
+                mode: "0777"
+                path: "/var/log/xdebug.log"
+                state: "touch"
+        -   name: "update default apache vhost"
+            replace:
+                path: "/etc/httpd/conf/httpd.conf"
+                regexp: '(.*)(\/var\/www\/html)(.*)'
+                replace: '\1{{ server_document_root }}\3'
+            notify: "restart apache"
+        -   name: "install varnish devel"
+            dnf:
+                name: "varnish-devel"
+                state: "present"
+            notify: "restart varnish"
+        -   name: "install packages to compile Varnish VMODs"
+            dnf:
+                name: [
+                        'autoconf',
+                        'automake',
+                        'libtool',
+                        'pkgconfig',
+                        'python3-docutils',
+                        'python3-sphinx',
+                        'jemalloc-devel'
+                ]
+                state: "present"
+        -   name: "check if we need to build the VMODs"
+            command: "ls /usr/lib64/varnish/vmods/libvmod_xkey.so"
+            ignore_errors: "yes"
+            register: "result"
+        -   name: "registering variable from last command"
+            set_fact:
+                varnish_build_vmods: "{{ result.failed }}"
+            when: result is defined
+        -   name: "get the VMODs repo"
+            git:
+                dest: "/tmp/vmods"
+                repo: "https://github.com/varnish/varnish-modules.git"
+                version: "6.6"
+            when: "varnish_build_vmods"
+        -   name: "bootstrap the source"
+            args:
+                chdir: "/tmp/vmods"
+            command: "./bootstrap"
+            when: "varnish_build_vmods"
+        -   name: "configure the source"
+            args:
+                chdir: "/tmp/vmods"
+            command: "./configure"
+            when: "varnish_build_vmods"
+        -   name: "switch to build directory"
+            make:
+                chdir: "/tmp/vmods"
+            when: "varnish_build_vmods"
+        -   name: "build varnish VMODs"
+            make:
+                chdir: "/tmp/vmods"
+                target: "install"
+            notify: "restart varnish"
+            when: "varnish_build_vmods"
+        -   name: "remove /tmp/vmods"
+            file:
+                path: "/tmp/vmods"
+                state: "absent"
+            when: "varnish_build_vmods"
+        -   name: "install PIP packages"
+            pip:
+                name: "{{ item[0] }}"
+                executable: "pip3"
+                extra_args: "--user"
+            become: "true"
+            become_user: "{{ item[1].user }}"
+            loop: "{{ pip_packages | product(server_users) | list }}"
+        -   name: "add some environmental variables and update PATH"
+            vars:
+                local_paths:
+                    - "export PATH=$HOME/.composer/vendor/bin/:$PATH"
+                    - "export PATH=$HOME/.local/bin/:$PATH"
+                    - "export PATH=$JAVA_HOME/bin:$PATH"
+            lineinfile:
+                path: "~/.bash_profile"
+                state: "present"
+                line: "{{ item[1] }}"
+            become: "true"
+            become_user: "{{ item[0].user }}"
+            loop: "{{ server_users | product(local_paths) | list }}"
+########################################################################################################################
+
+########################################################################################################################
+# Configure apache #####################################################################################################
+########################################################################################################################
+-   name: "configuring apache"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "configure_apache"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "add the local users to the apache group"
+            user:
+                append: "yes"
+                groups: "{{ apache_group }}"
+                name: "{{ item.user }}"
+            loop: "{{ server_users }}"
+        -   name: "add the apache user to the local users' groups"
+            user:
+                append: "yes"
+                groups: "{{ item.user }}"
+                name: "{{ apache_group }}"
+            loop: "{{ server_users }}"
+        -   name: "give vagrant user and apache group recursive ownership of {{ server_document_root }} and set the group sticky bit"
+            file:
+                group: "{{ apache_group }}"
+                mode: "u=rwX,g=srwX,o=rX"
+                owner: "vagrant"
+                path: "{{ server_document_root }}"
+                recurse: "yes"
+        -   name: "add an /etc/systemd/system/{{ php_webserver_daemon }}.service.d/ folder to set an apache umask override in"
+            file:
+                dest: "/etc/systemd/system/{{ php_webserver_daemon }}.service.d/"
+                state: "directory"
+        -   name: "set an apache umask override"
+            copy:
+                content: |
+                    [Service]
+                    UMask=0002
+                dest: "/etc/systemd/system/{{ php_webserver_daemon }}.service.d/override.conf"
+        -   name: "update ssl.conf"
+            template:
+                dest: "/etc/httpd/conf.d/ssl.conf"
+                mode: "0644"
+                src: "templates/httpd/conf.d/ssl.conf.j2"
+        -   name: "create an index.php for the default box"
+            copy:
+                content: |
+                    <?php
+                    phpinfo();
+                    ?>
+                dest: "{{ server_document_root }}/index.php"
+                force: "no"
+                group: "{{ apache_group }}"
+                mode: "u+rw,g+rw,o+r"
+                owner: "vagrant"
+        -   name: "add logrotate entry for httpd"
+            template:
+                dest: "/etc/logrotate.d/httpd"
+                mode: "0644"
+                src: "templates/logrotate.d/httpd.j2"
+        -   name: "remove the {{ server_cgi_root }} directory"
+            file:
+                path: "{{ server_cgi_root }}"
+                state: "absent"
+        -   name: "reload apache"
+            systemd:
+                daemon_reload: "true"
+                name: "{{ php_webserver_daemon }}"
+                state: "reloaded"
+########################################################################################################################
+
+########################################################################################################################
+# Configure firewalld ##################################################################################################
+########################################################################################################################
+-   name: "configuring firewalld"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "configure_firewalld"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "force the NFS lock manager to use a consistent UDP port (36389) when building a local box"
+            template:
+                dest: "/etc/modprobe.d/lockd.conf"
+                mode: "0644"
+                src: "templates/modprobe.d/lockd.conf"
+        -   name: "configure firewalld services"
+            firewalld:
+                permanent: "yes"
+                service: "{{ item.name }}"
+                state: "{{ item.state }}"
+            loop:
+                - { name: "http", state: "enabled" }
+                - { name: "https", state: "enabled" }
+                - { name: "mountd", state: "enabled" }
+                - { name: "mysql", state: "enabled" }
+                - { name: "nfs", state: "enabled" }
+                - { name: "postgresql", state: "enabled" }
+                - { name: "rpc-bind", state: "enabled" }
+                - { name: "samba", state: "enabled" }
+                - { name: "ssh", state: "enabled" }
+        -   name: "configure firewalld ports"
+            firewalld:
+                permanent: "yes"
+                port: "{{ item.port }}"
+                state: "{{ item.state }}"
+            loop:
+                - { port: "1080/tcp", state: "enabled" } # mailcatcher
+                - { port: "3000/tcp", state: "enabled" } # node / rails dev servers
+                - { port: "4200/tcp", state: "enabled" } # ng
+                - { port: "5000/tcp", state: "enabled" } # serve
+                - { port: "5001/tcp", state: "enabled" } # dotnet
+                - { port: "8000/tcp", state: "enabled" } # django / symfony
+                - { port: "8080/tcp", state: "enabled" } # alt http
+                - { port: "8443/tcp", state: "enabled" } # alt https
+                - { port: "27017/tcp", state: "enabled" } # mongodb
+                - { port: "27018/tcp", state: "enabled" } # mongodb
+                - { port: "27019/tcp", state: "enabled" } # mongodb
+                - { port: "36389/tcp", state: "enabled" } # lockd windows
+                - { port: "36389/udp", state: "enabled" } # lockd mac
+        -   name: "reload firewalld"
+            systemd:
+                daemon_reload: "true"
+                name: "firewalld"
+                state: "started"
+########################################################################################################################
+
+########################################################################################################################
+# Configure postfix ####################################################################################################
+########################################################################################################################
+-   name: "configuring postfix"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "configure_postfix"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "ensure postfix is enabled and started"
+            service:
+                enabled: "yes"
+                name: "postfix"
+                state: "started"
+        -   name: "set postfix as the default mta alternative"
+            alternatives:
+                name: "mta"
+                path: "/usr/sbin/sendmail.postfix"
+########################################################################################################################
+
+########################################################################################################################
+# Configure SELinux ####################################################################################################
+########################################################################################################################
+-   name: "configuring selinux"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "configure_selinux"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "add custom selinux policies directory"
+            file:
+                path: "/usr/share/selinux/policies"
+                state: "directory"
+#         TODO: add this back when mongo starts building for rhel9
+#         -   name: "copy custom policies"
+#             synchronize:
+#                 dest: "/usr/share/selinux/policies/{{ item }}"
+#                 src: "files/selinux/{{ item }}"
+#             loop:
+#                 - "mongodb_cgroup_memory.te"
+#                 - "mongodb_proc_net.te"
+#         -   name: "compile and enable custom policies"
+#             shell: "checkmodule -M -m -o {{ item }}.mod {{ item }}.te && semodule_package -o {{ item }}.pp -m {{ item }}.mod && semodule -i {{ item }}.pp"
+#             args:
+#                 chdir: "/usr/share/selinux/policies/"
+#                 creates: "/usr/share/selinux/policies/{{ item }}.pp"
+#             loop:
+#                 - "mongodb_cgroup_memory"
+#                 - "mongodb_proc_net"
+        -   name: "Set SELinux permissive"
+            selinux:
+                policy: "targeted"
+                state: "permissive"
+        -   name: "enable SELinux httpd flags"
+            seboolean:
+                name: "{{ item }}"
+                persistent: "yes"
+                state: "yes"
+            loop:
+                - "httpd_can_network_connect"
+                - "httpd_can_network_memcache"
+                - "httpd_can_sendmail"
+                - "httpd_execmem"
+                - "varnishd_connect_any"
+        -   name: "set selinux policy for certain apache directories"
+            sefcontext:
+                reload: "yes"
+                setype: "{{ item.setype }}"
+                state: "present"
+                target: '{{ item.target }}(/.*)?'
+            register: "filecontext"
+            loop:
+                - { target: "{{ server_document_root }}", setype: 'httpd_sys_rw_content_t' }
+                - { target: "/var/log/httpd", setype: 'httpd_log_t' }
+        -   name: "apply new SELinux file context to filesystem"
+            command: "restorecon -irv {{ server_document_root }}"
+########################################################################################################################
+
+########################################################################################################################
+# Disable select items #################################################################################################
+########################################################################################################################
+-   name: "disabling select items"
+    become: "yes"
+    hosts: "all"
+    tags:
+        - "disable_items"
+    vars_files:
+        - "host_vars/common.yml"
+    tasks:
+        -   name: "ensure apache is enabled and started"
+            service:
+                enabled: "yes"
+                name: "httpd"
+                state: "started"
+        -   name: "ensure nginx is disabled and stopped"
+            service:
+                enabled: "no"
+                name: "nginx"
+                state: "stopped"
+        -   name: "ensure varnish is disabled and stopped"
+            service:
+                enabled: "no"
+                name: "varnish"
+                state: "stopped"
+        -   name: "ensure memcached is disabled and stopped"
+            service:
+                enabled: "no"
+                name: "memcached"
+                state: "stopped"
+########################################################################################################################

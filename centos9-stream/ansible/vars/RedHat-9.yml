@@ -1,0 +1,27 @@
+# TODO: remove when https://github.com/geerlingguy/ansible-role-postgresql is updated for CentOS 9
+__postgresql_version: "14"
+__postgresql_daemon: "postgresql-14"
+__postgresql_data_dir: "/var/lib/pgsql/{{ __postgresql_version }}/data"
+__postgresql_bin_path: "/usr/pgsql-{{ __postgresql_version }}/bin/"
+__postgresql_config_path: "/var/lib/pgsql/{{ __postgresql_version }}/data"
+__postgresql_packages:
+    - "postgresql14-server"
+    - "postgresql14-contrib"
+
+# TODO: remove when https://github.com/geerlingguy/ansible-role-mysql is updated for CentOS 9
+__mysql_daemon: mariadb
+__mysql_packages:
+  - mariadb
+  - mariadb-server
+  - mariadb-connector-c
+  - python3-PyMySQL
+  - perl-DBD-MySQL
+__mysql_slow_query_log_file: /var/log/mysql-slow.log
+__mysql_log_error: /var/log/mariadb/mariadb.log
+__mysql_syslog_tag: mariadb
+__mysql_pid_file: /var/run/mariadb/mariadb.pid
+__mysql_config_file: /etc/my.cnf
+__mysql_config_include_dir: /etc/my.cnf.d
+__mysql_socket: /var/lib/mysql/mysql.sock
+__mysql_supports_innodb_large_prefix: false
+

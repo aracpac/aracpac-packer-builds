@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/neofetch --source /etc/aracpac-ascii

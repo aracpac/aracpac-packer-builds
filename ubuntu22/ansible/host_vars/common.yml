@@ -1,0 +1,178 @@
+# Apache settings ######################################################################################################
+apache_create_vhosts: "true"
+apache_group: "www-data"
+apache_group_id: "33"
+apache_listen_ip: "*"
+apache_mods_enabled:
+    - "expires"
+    - "http2"
+    - "headers"
+    - "mpm_event"
+    - "proxy"
+    - "proxy_fcgi"
+    - "proxy_http2"
+    - "rewrite"
+    - "ssl"
+apache_mods_disabled:
+    - "mpm_prefork"
+    - "php8.1"
+apache_packages_state: "latest"
+apache_remove_default_vhost: "true"
+apache_state: "stopped"
+apache_vhosts:
+    -   servername: "null"
+        serveralias: "*"
+        documentroot: "${documentroot}"
+        extra_parameters: |
+            RewriteCond %{HTTP_HOST} !^www\. [NC]
+            RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.1-fpm.sock|fcgi://localhost${documentroot}"
+apache_vhosts_ssl:
+    -   servername: "null"
+        serveralias: "*"
+        documentroot: "${documentroot}"
+        certificate_file: "/etc/ssl/dev.crt"
+        certificate_key_file: "/etc/ssl/dev.pem"
+        extra_parameters: |
+            RewriteCond %{HTTP_HOST} !^www\. [NC]
+            RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.1-fpm.sock|fcgi://localhost${documentroot}"
+apache_global_vhost_settings: |
+    DirectoryIndex index.php index.html
+    Define documentroot {{ server_document_root }}
+    Protocols h2 http/1.1
+
+# Docker settings ######################################################################################################
+docker_service_state: "stopped"
+docker_service_enabled: "no"
+docker_users:
+    - "vagrant"
+
+# Java settings ########################################################################################################
+java_packages:
+    - "openjdk-8-jdk"
+    - "openjdk-8-jre"
+    - "openjdk-11-jre"
+    - "openjdk-11-jdk"
+    - "openjdk-17-jre"
+    - "openjdk-17-jdk"
+java_home: '$(readlink -f /usr/bin/java | sed "s:/bin/java::")'
+
+# MySQL settings #######################################################################################################
+mysql_user_home: "/root"
+mysql_user_name: "root"
+mysql_user_password: "root"
+mysql_user_password_update: "yes"
+mysql_root_home: "/root"
+mysql_root_username: "root"
+mysql_root_password: "root"
+overwrite_global_mycnf: "yes"
+
+# NFS settings #########################################################################################################
+nfs_exports:
+    - "# see https://linux.die.net/man/5/exports"
+    - "# *               - anyone on the network can access this share"
+    - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
+    - "{{ server_document_root }}    *(all_squash,anonuid={{ getent_passwd.vagrant[1] }},anongid={{ getent_group.vagrant[1] }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
+
+# nginx settings #######################################################################################################
+nginx_remove_default_vhost: "true"
+nginx_service_enabled: "no"
+nginx_service_state: "stopped"
+
+# NPM settings #########################################################################################################
+npm_packages:
+    - "@angular/cli"
+    - "@vue/cli"
+    - "@vue/cli-service-global"
+    - "create-react-app"
+    - "diff-so-fancy"
+    - "ember-cli"
+    - "express-generator"
+    - "pm2"
+    - "rome"
+    - "sass"
+    - "serve"
+    - "webpack"
+    - "yarn"
+
+# PHP settings #########################################################################################################
+composer_global_packages:
+    - { name: "laravel/installer" }
+composer_home_path: "/home/vagrant/.composer"
+composer_home_owner: "vagrant"
+composer_home_group: "vagrant"
+php_date_timezone: "{{ server_timezone }}"
+php_html_errors: "false"
+php_memory_limit: "2048M"
+php_opcache_load_comments: "1"
+php_opcache_save_comments: "1"
+php_packages:
+    - "php"
+    - "php-apcu"
+    - "php-cli"
+    - "php-common"
+    - "php-curl"
+    - "php-dev"
+    - "php-fpm"
+    - "php-gd"
+    - "php-imap"
+    - "php-igbinary"
+    - "php-intl"
+    - "php-imagick"
+    - "php-json"
+    - "php-ldap"
+    - "php-mbstring"
+    - "php-mcrypt"
+    - "php-memcache"
+    - "php-msgpack"
+    - "php-pear"
+    - "php-pspell"
+    - "php-soap"
+    - "php-readline"
+    - "php-sqlite3"
+    - "php-xdebug"
+    - "php-xml"
+    - "php-yaml"
+    - "php-zip"
+php_post_max_size: "51M"
+php_session_gc_maxlifetime: "2592000"
+php_session_gc_probability: "1"
+php_upload_max_filesize: "50M"
+php_variables_order: "EGPCS"
+php_version: "8.1"
+php_webserver_daemon: "apache2"
+
+# PGSQL settings #######################################################################################################
+postgres_users_no_log: "false"
+postgresql_users:
+    -   name: "vagrant"
+        db: "postgres"
+        password: "vagrant"
+        priv: "ALL"
+        role_attr_flags: "login,superuser"
+
+# Python settings ######################################################################################################
+pip_packages:
+    - "Django"
+    - "virtualenv"
+
+# Ruby settings ########################################################################################################
+ruby_packages:
+    - "bundler"
+    - "mailcatcher"
+    - "rails"
+
+# Server settings ######################################################################################################
+server_cgi_root: "/var/www/cgi-bin"
+server_document_root: "/var/www"
+server_timezone: "America/Vancouver"
+server_users:
+    - { user: "vagrant", pass: "vagrant" }
+server_users_and_root_user: "{{ server_users + [{ \"user\": \"root\" }] }}"
+
+# Varnish settings #####################################################################################################
+varnish_default_backend_host: "127.0.0.1"
+varnish_default_backend_port: "80"
+varnish_listen_port: "8080"
+varnish_version: "7.1"
