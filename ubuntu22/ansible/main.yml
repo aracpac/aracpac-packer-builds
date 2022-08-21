@@ -191,7 +191,6 @@
             vars:
                 local_users: "{{ server_users }}"
                 local_commands:
-                    - "cd ~"
                     - "curl --silent --location https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
                     - "bash -ilc '. ~/.bashrc && nvm install --lts'" # force bash interactive mode so .bashrc is read and the nvm and npm commands are recognized
                     - "bash -ilc '. ~/.bashrc && yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
@@ -208,7 +207,6 @@
             vars:
                 local_users: "{{ server_users }}"
                 local_commands:
-                    - "cd ~"
                     - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
                     - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
                     - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'

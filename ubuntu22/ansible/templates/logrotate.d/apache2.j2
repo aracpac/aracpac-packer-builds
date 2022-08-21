@@ -1,5 +1,5 @@
 # {{ ansible_managed }}
-/var/log/httpd/*log {
+/var/log/apache2/*log {
     rotate 14
     missingok
     notifempty
@@ -7,6 +7,6 @@
     compress
     delaycompress
     postrotate
-        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+        /bin/systemctl reload apache2.service > /dev/null 2>/dev/null || true
     endscript
 }
