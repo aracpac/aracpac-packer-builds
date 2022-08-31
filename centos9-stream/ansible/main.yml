@@ -35,7 +35,7 @@
                 path: "/etc/ssl/dev.crt"
                 privatekey_path: "/etc/ssl/dev.pem"
                 provider: "selfsigned"
-                selfsigned_not_after: "+730d" # this is the maximum valid length
+                selfsigned_not_after: "+397d" # this is the maximum valid length
         -   name: "enable the dynamic CA configuration feature"
             command:
                 cmd: "update-ca-trust force-enable"
@@ -77,20 +77,13 @@
                 dest: "/etc/sudoers.d/99_{{ item.user }}"
                 content: "{{ item.user }} ALL=(ALL) NOPASSWD:ALL"
             loop: "{{ server_users }}"
-        -   name: "add dotfiles to each user's user directory"
-            no_log: "true"
-            synchronize:
+        -   name: "clone dotfiles repo"
+            become: "yes"
+            become_user: "{{ item.user }}"
+            ansible.builtin.git:
+                repo: "https://github.com/aracpac/aracpac-dotfiles.git"
                 dest: "/home/{{ item.user }}"
-                src: "files/dotfiles/"
             loop: "{{ server_users }}"
-            register: "accounts_dotfiles"
-            notify: "fix perms"
-    handlers:
-        -   name: "fix perms"
-            command: "chown -R {{ item }}:{{ item }} /home/{{ item }}"
-            args:
-                warn: "false"
-            loop: "{{ accounts_dotfiles.results | selectattr('item.user', '!=', 'root') | selectattr('changed', '==', true) | map(attribute='item.user') | list }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -130,9 +123,9 @@
                     - "ImageMagick"
                     - "ImageMagick-devel"
                     - "iotop"
-                    - "libffi-devel" # rbenv dep
+                    - "libffi-devel"
                     - "libmcrypt-devel"
-                    - "libyaml-devel" # rbenv dep
+                    - "libyaml-devel"
                     - "maven"
 #                     - "mongodb-org" # TODO: add this back when mongo starts building for rhel9
                     - "neofetch"
@@ -145,7 +138,7 @@
                     - "pv"
                     - "vim"
                     - "rustc"
-                    - "readline-devel" # rbenv dep
+                    - "readline-devel"
                     - "sendmail-cf"
                     - "sqlite"
                     - "sqlite-devel"
@@ -172,16 +165,24 @@
                 executable: "/bin/bash"
                 warn: "false"
             loop:
-                - { "command": "curl --silent --location https://get.symfony.com/cli/installer | bash - && mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony", creates: "/usr/local/bin/symfony" } # symfony
-                - { "command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp", creates: "/usr/local/bin/wp" } # WordPress
+                - {
+                    "command": "curl --silent --location https://get.symfony.com/cli/installer | bash - && \
+                                mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && \
+                                rm -fr $HOME/.symfony",
+                    creates: "/usr/local/bin/symfony"
+                }
+                - {
+                    "command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \ 
+                                chmod +x /usr/local/bin/wp",
+                    creates: "/usr/local/bin/wp"
+                }
         -   name: "installing NVM and NPM packages for all users"
             vars:
                 local_users: "{{ server_users }}"
                 local_commands:
-                    - "cd ~"
                     - "curl --silent --location https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
-                    - "bash -ilc '. ~/.bashrc && nvm install --lts'" # force bash interactive mode so .bashrc is read and the nvm and npm commands are recognized
-                    - "bash -ilc '. ~/.bashrc && yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
+                    - "bash -ic 'nvm install --lts'"
+                    - "bash -ic 'yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
                     - "touch ~/.nvm/.installed"
             shell: "{{ item[1] }}"
             args:
@@ -195,13 +196,12 @@
             vars:
                 local_users: "{{ server_users }}"
                 local_commands:
-                    - "cd ~"
                     - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
-                    - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_profile'
+                    - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_exports'
                     - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
-                    - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
-                    - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
-                    - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
+                    - "bash -ic 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
+                    - "bash -ic 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
+                    - "bash -ic 'gem install {{ ruby_packages | join(' ') }}'"
                     - "touch ~/.rbenv/.installed"
             shell: "{{ item[1] }}"
             args:
@@ -215,9 +215,18 @@
             vars:
                 local_users: "{{ server_users }}"
                 local_commands:
-                    - { "command": "curl --silent --location https://get.sdkman.io | bash", creates: "~/.sdkman/bin/sdkman-init.sh" } # SDKMAN
-                    - { "command": "bash -ilc '. ~/.bashrc && sdk install springboot'", creates: "~/.sdkman/candidates/springboot/current/bin/spring" } # spring
-                    - { "command": "bash -ilc '. ~/.bashrc && sdk install gradle'", creates: "~/.sdkman/candidates/gradle/current/bin/gradle" } # gradle
+                    - {
+                        command: "curl --silent --location https://get.sdkman.io | bash",
+                        creates: "~/.sdkman/bin/sdkman-init.sh"
+                    }
+                    - {
+                        command: "bash -ilc '. ~/.bashrc && sdk install springboot'",
+                        creates: "~/.sdkman/candidates/springboot/current/bin/spring"
+                    }
+                    - {
+                        command: "bash -ilc '. ~/.bashrc && sdk install gradle'",
+                        creates: "~/.sdkman/candidates/gradle/current/bin/gradle"
+                    }
             shell: "{{ item[1].command }}"
             args:
                 creates: "{{ item[1].creates }}"
@@ -226,6 +235,13 @@
             become: "true"
             become_user: "{{ item[0].user }}"
             loop: "{{ local_users | product(local_commands) | list }}"
+        -   name: "enable legacy Putty support"
+            lineinfile:
+                path: "{{ item.path }}"
+                line: "{{ item.line }}"
+            loop:
+                - { path: "/etc/ssh/sshd_config", line: "HostKeyAlgorithms +ssh-rsa" }
+                - { path: "/etc/ssh/sshd_config", line: "PubkeyAcceptedAlgorithms +ssh-rsa" }
 ########################################################################################################################
 
 ########################################################################################################################
@@ -311,11 +327,10 @@
                 name: "javac"
                 link: "/usr/bin/javac"
                 path: "{{ java_17_openjdk_path }}/bin/javac"
-#         # TODO: add this back when postgis becomes available
-#         -   name: "installing PostGIS (requires PostgreSQL to be installed first)"
-#             dnf:
-#                 name:
-#                     - "postgis31_14"
+        -   name: "installing PostGIS (requires PostgreSQL to be installed first)"
+            dnf:
+                name:
+                    - "postgis31_14"
         -   name: "create xdebug log file"
             file:
                 mode: "0777"
