@@ -1,3 +1,4 @@
+---
 # TODO: remove when https://github.com/geerlingguy/ansible-role-postgresql is updated for CentOS 9
 __postgresql_version: "14"
 __postgresql_data_dir: "/var/lib/postgresql/{{ __postgresql_version }}/main"

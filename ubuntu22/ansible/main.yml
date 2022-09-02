@@ -1,3 +1,4 @@
+---
 # Run locally like:
 #   ansible-playbook -c local -i localhost, main.yml
 ########################################################################################################################
@@ -79,7 +80,25 @@
       become_user: "{{ item.user }}"
       ansible.builtin.git:
         repo: "https://github.com/aracpac/aracpac-dotfiles.git"
-        dest: "/home/{{ item.user }}"
+        dest: "/home/{{ item.user }}/.dotfiles"
+      loop: "{{ server_users }}"
+    - name: "symlink dotfiles"
+      become: "yes"
+      become_user: "{{ item.user }}"
+      shell: "/home/{{ item.user }}/.dotfiles/symlinkctl enable"
+      args:
+        chdir: "/home/{{ item.user }}/.dotfiles"
+        creates: "/home/{{ item.user }}/.tmux"
+        executable: "/bin/bash"
+        warn: "false"
+      loop: "{{ server_users }}"
+    - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
+      become: "yes"
+      become_user: "{{ item.user }}"
+      replace:
+        path: "~/.bashrc"
+        regexp: 'check_for_userspace_commands'
+        replace: '# check_for_userspace_commands'
       loop: "{{ server_users }}"
 ########################################################################################################################
 
@@ -118,8 +137,17 @@
       apt:
         deb: "{{ item }}"
       loop:
-        - "http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.17_amd64.deb"
-  tasks: # See the default Ubuntu 20 package list at http://releases.ubuntu.com/22.04/ubuntu-22.04-live-server-amd64.manifest
+        - "http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.20_amd64.deb"
+    - name: "installing packages via installers"
+      shell: "{{ item.command }}"
+      args:
+        creates: "{{ item.creates }}"
+        executable: "/bin/bash"
+        warn: "false"
+      loop:
+        - {command: "curl --silent --location https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh | bash",
+           creates: "/etc/apt/sources.list.d/symfony-stable.list"}
+  tasks: # See the default Ubuntu 20 package list at https://releases.ubuntu.com/22.04/ubuntu-22.04.1-live-server-amd64.manifest
     - name: "installing packages from package manager"
       apt:
         name:
@@ -133,6 +161,7 @@
           - "build-essential"
           - "byobu"
           - "clang"
+          - "cmake"
           - "dotnet-sdk-6.0"
           - "dotnet-runtime-6.0"
           - "firewalld"
@@ -150,14 +179,15 @@
           - "pip"
           - "policycoreutils-python-utils"
           - "postfix"
+          - "powerline"
           - "python3"
           - "python3-venv"
           - "pv"
-          - "rustc"
           - "sendmail-cf"
           - "sqlite3"
           - "subversion"
           - "supervisor"
+          - "symfony-cli"
           - "tree"
           - "vim"
           - "unzip"
@@ -183,10 +213,7 @@
         executable: "/bin/bash"
         warn: "false"
       loop:
-        - {command: "curl --silent --location https://get.symfony.com/cli/installer | bash - && \
-                                mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony && rm -fr $HOME/.symfony",
-           creates: "/usr/local/bin/symfony"}
-        - {command: "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+        - {command: "curl --silent --location --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
                               chmod +x /usr/local/bin/wp",
            creates: "/usr/local/bin/wp"}
     - name: "installing NVM and NPM packages for all users"
@@ -194,8 +221,8 @@
         local_users: "{{ server_users }}"
         local_commands:
           - "curl --silent --location https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
-          - "bash -ic '. ~/.bashrc && nvm install --lts'"
-          - "bash -ic '. ~/.bashrc && yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
+          - "bash -ilc 'nvm install --lts'"
+          - "bash -ilc 'yes n | npm install --global --silent --unsafe-perm=true --allow-root {{ npm_packages | join(' ') }}'"
           - "touch ~/.nvm/.installed"
       shell: "{{ item[1] }}"
       args:
@@ -212,9 +239,9 @@
           - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
           - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_exports'
           - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
-          - "bash -ic 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
-          - "bash -ic 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
-          - "bash -ic 'gem install {{ ruby_packages | join(' ') }}'"
+          - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
+          - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
+          - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
           - "touch ~/.rbenv/.installed"
       shell: "{{ item[1] }}"
       args:
@@ -228,11 +255,15 @@
       vars:
         local_users: "{{ server_users }}"
         local_commands:
+          - {command: "curl --silent --location https://sh.rustup.rs | bash -s -- -y",
+             creates: "$HOME/.cargo"}
+          - {command: "bash -ilc 'cargo install {{ cargo_packages | join(' ') }}'",
+             creates: "$HOME/.cargo/bin/{{ cargo_packages | last }}"}
           - {command: "curl --silent --location https://get.sdkman.io | bash",
              creates: "~/.sdkman/bin/sdkman-init.sh"}
-          - {command: "bash -ilc '. ~/.bashrc && sdk install springboot'",
+          - {command: "bash -ilc 'sdk install springboot'",
              creates: "~/.sdkman/candidates/springboot/current/bin/spring"}
-          - {command: "bash -ilc '. ~/.bashrc && sdk install gradle'",
+          - {command: "bash -ilc 'sdk install gradle'",
              creates: "~/.sdkman/candidates/gradle/current/bin/gradle"}
       shell: "{{ item[1].command }}"
       args:
@@ -242,13 +273,6 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
-    - name: "enable legacy Putty support"
-      lineinfile:
-        path: "{{ item.path }}"
-        line: "{{ item.line }}"
-      loop:
-        - {path: "/etc/ssh/sshd_config", line: "HostKeyAlgorithms +ssh-rsa"}
-        - {path: "/etc/ssh/sshd_config", line: "PubkeyAcceptedAlgorithms +ssh-rsa"}
 ########################################################################################################################
 
 ########################################################################################################################

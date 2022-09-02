@@ -1,3 +1,4 @@
+---
 # Apache settings ######################################################################################################
 apache_create_vhosts: "true"
 apache_group: "www-data"
@@ -86,7 +87,6 @@ npm_packages:
     - "@vue/cli"
     - "@vue/cli-service-global"
     - "create-react-app"
-    - "diff-so-fancy"
     - "ember-cli"
     - "express-generator"
     - "pm2"
@@ -162,6 +162,11 @@ ruby_packages:
     - "bundler"
     - "mailcatcher"
     - "rails"
+
+# Rust settings ########################################################################################################
+cargo_packages:
+    - "git-delta"
+    - "vivid"
 
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
