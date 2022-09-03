@@ -89,9 +89,9 @@
       vars:
         local_users: "{{ server_users }}"
         local_commands:
-          - { command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles" }
-          - { command: "bash -ilc 'vim --clean '+source ~/.vimrc' +PluginInstall +qall'", creates: "~/.vim/bundle/vim-polyglot" }
-          - { command: "bash -ilc '~/.tmux/plugins/tpm/scripts/install_plugins.sh'", creates: "~/.tmux/plugins/tmux-themepack" }
+          - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles"}
+          - {command: "bash -ilc 'vim --clean '+source ~/.vimrc' +PluginInstall +qall'", creates: "~/.vim/bundle/vim-polyglot"}
+          - {command: "bash -ilc '~/.tmux/plugins/tpm/scripts/install_plugins.sh'", creates: "~/.tmux/plugins/tmux-themepack"}
       shell: "{{ item[1].command }}"
       args:
         chdir: "{{ omit if item[1].chdir is not defined or item[1].chdir }}"
@@ -128,7 +128,7 @@
     - name: "install mongo repo"
       shell: 'echo -e "[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc" > /etc/yum.repos.d/mongodb-org-5.0.repo'
       args:
-       creates: "/etc/yum.repos.d/mongodb-org-5.0.repo"
+        creates: "/etc/yum.repos.d/mongodb-org-5.0.repo"
     - name: "installing packages via installers"
       shell: "{{ item.command }}"
       args:
@@ -259,6 +259,12 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
+    - name: "symlink cargo diff and dircolor binaries"
+      file:
+        src: "/home/{{ server_users[0] }}/.cargo/bin/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        state: "link"
+      loop: "{{ cargo_packages }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -607,8 +613,8 @@
         dest: "/usr/share/selinux/policies/{{ item }}"
         src: "files/selinux/{{ item }}"
       loop:
-         - "mongodb_cgroup_memory.te"
-         - "mongodb_proc_net.te"
+        - "mongodb_cgroup_memory.te"
+        - "mongodb_proc_net.te"
     - name: "compile and enable custom policies"
       shell: "checkmodule -M -m -o {{ item }}.mod {{ item }}.te && semodule_package -o {{ item }}.pp -m {{ item }}.mod && semodule -i {{ item }}.pp"
       args:
