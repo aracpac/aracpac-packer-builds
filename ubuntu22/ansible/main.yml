@@ -78,20 +78,26 @@
     - name: "clone dotfiles repo"
       become: "yes"
       become_user: "{{ item.user }}"
-      ansible.builtin.git:
+      git:
         repo: "https://github.com/aracpac/aracpac-dotfiles.git"
         dest: "/home/{{ item.user }}/.dotfiles"
       loop: "{{ server_users }}"
-    - name: "symlink dotfiles"
-      become: "yes"
-      become_user: "{{ item.user }}"
-      shell: "/home/{{ item.user }}/.dotfiles/symlinkctl enable"
+    - name: "configuring dotfiles"
+      vars:
+        local_users: "{{ server_users }}"
+        local_commands:
+          - { command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles" }
+          - { command: "bash -ilc 'vim --clean '+source ~/.vimrc' +PluginInstall +qall'", creates: "~/.vim/bundle/vim-polyglot" }
+          - { command: "bash -ilc '~/.tmux/plugins/tpm/scripts/install_plugins.sh'", creates: "~/.tmux/plugins/tmux-themepack" }
+      shell: "{{ item[1].command }}"
       args:
-        chdir: "/home/{{ item.user }}/.dotfiles"
-        creates: "/home/{{ item.user }}/.tmux"
+        chdir: "{{ omit if item[1].chdir is not defined or item[1].chdir }}"
+        creates: "{{ item[1].creates }}"
         executable: "/bin/bash"
         warn: "false"
-      loop: "{{ server_users }}"
+      become: "true"
+      become_user: "{{ item[0].user }}"
+      loop: "{{ local_users | product(local_commands) | list }}"
     - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
       become: "yes"
       become_user: "{{ item.user }}"
@@ -179,15 +185,16 @@
           - "pip"
           - "policycoreutils-python-utils"
           - "postfix"
-          - "powerline"
           - "python3"
           - "python3-venv"
           - "pv"
+          - "screen"
           - "sendmail-cf"
           - "sqlite3"
           - "subversion"
           - "supervisor"
           - "symfony-cli"
+          - "tmux"
           - "tree"
           - "vim"
           - "unzip"

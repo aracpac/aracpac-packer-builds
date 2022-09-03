@@ -5,10 +5,6 @@ source "virtualbox-iso" "main" {
   cpus                    = "${var.vb_cpus}"
   disk_size               = "${var.vb_disk_size}"
   guest_additions_path    = "VBoxGuestAdditions_{{ .Version }}.iso"
-  # TODO: remove the guest additions url and sha256 once upstream builds stop failing on CentOS 9 Stream
-  guest_additions_url     = "https://www.virtualbox.org/download/testcase/VBoxGuestAdditions_6.1.35-151572.iso"
-  guest_additions_sha256  = "b2fb35c9139923f5cf7f60557ac773fe11137c7afdd488a6d1c8a1d03b42ee6e"
-  # TODO: remove the guest additions url and sha256 once upstream builds stop failing on CentOS 9 Stream
   guest_os_type           = "RedHat_64"
   hard_drive_interface    = "sata"
   headless                = true
@@ -34,16 +30,8 @@ build {
   provisioner "shell" {
     expect_disconnect = true
     pause_after       = "60s"
-    scripts           = ["scripts/update.sh"]
+    scripts           = ["scripts/legacy_crypto.sh", "scripts/update.sh"]
   }
-
-## TODO: debug why this block is skipped (only on this centos, ubuntu version runs as expected). for now, added
-## virtualbox.sh to the next block
-#  provisioner "shell" {
-#    clean_staging_directory = true
-#    only                    = ["source.virtualbox-iso.main"]
-#    scripts                 = ["scripts/virtualbox.sh"]
-#  }
 
   provisioner "shell" {
     scripts           = ["scripts/virtualbox.sh", "scripts/ansible.sh", "scripts/sshd.sh", "scripts/networking.sh"]
@@ -83,7 +71,7 @@ variable "image_name" {
 
 variable "iso_checksum" {
   type    = string
-  default = "4f82226b4c2fb362a9c224e5437a17512bfaaec56760f3a534bbd8776124fc4d"
+  default = "a5ee89193b8c55ecdf6686cbc9db6a2e93060d7050595113f47fe9576caff272"
 }
 
 variable "iso_name" {
@@ -118,5 +106,5 @@ variable "vb_memory" {
 
 variable "version" {
   type    = string
-  default = "2.0.0"
+  default = "2.1.0"
 }

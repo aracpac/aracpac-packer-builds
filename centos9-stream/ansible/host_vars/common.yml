@@ -1,3 +1,4 @@
+---
 # Apache settings ######################################################################################################
 apache_create_vhosts: "true"
 apache_enablerepo: "epel"
@@ -86,7 +87,6 @@ npm_packages:
     - "@vue/cli"
     - "@vue/cli-service-global"
     - "create-react-app"
-    - "diff-so-fancy"
     - "ember-cli"
     - "express-generator"
     - "pm2"
@@ -170,6 +170,11 @@ ruby_packages:
     - "mailcatcher"
     - "rails"
 
+# Rust settings ########################################################################################################
+cargo_packages:
+    - "git-delta"
+    - "vivid"
+
 # Server settings ######################################################################################################
 server_cgi_root: "/var/www/cgi-bin"
 server_document_root: "/var/www"
@@ -182,4 +187,4 @@ server_users_and_root_user: "{{ server_users + [{ \"user\": \"root\" }] }}"
 varnish_default_backend_host: "127.0.0.1"
 varnish_default_backend_port: "80"
 varnish_listen_port: "8080"
-varnish_version: "6.6"
+varnish_version: "7.1"
