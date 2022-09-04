@@ -87,8 +87,6 @@
         local_users: "{{ server_users }}"
         local_commands:
           - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles"}
-          - {command: "bash -ilc 'vim --clean '+source ~/.vimrc' +PluginInstall +qall'", creates: "~/.vim/bundle/vim-polyglot"}
-          - {command: "bash -ilc '~/.tmux/plugins/tpm/scripts/install_plugins.sh'", creates: "~/.tmux/plugins/tmux-themepack"}
           - {command: "bash -ilc 'rm ~.profile'", removes: "~/.profile"}
       shell: "{{ item[1].command }}"
       args:
