@@ -243,7 +243,7 @@
              creates: "~/.cargo"}
           - {command: "bash -ilc 'cargo install {{ cargo_packages | join(' ') }}'",
              creates: "~/.cargo/bin/{{ cargo_packages | last }}"}
-          - {command: "bash -ilc 'mkdir -p ~/.local/share/bash-completion/completions/rustup && \
+          - {command: "bash -ilc 'mkdir -p ~/.local/share/bash-completion/completions && \
                        rustup completions bash > ~/.local/share/bash-completion/completions/rustup'",
              creates: "~/.local/share/bash-completion/completions/rustup"}
           - {command: "curl --silent --location https://get.sdkman.io | bash",
@@ -440,7 +440,7 @@
       vars:
         local_paths:
           - { path: "~/.bash_profile", regexp: '. "$HOME/.cargo/env"', replace: "" }
-      lineinfile:
+      replace:
         regexp: "{{ item[1].regexp }}"
         replace: "{{ item[1].replace }}"
         path: "{{ item[1].path }}"
