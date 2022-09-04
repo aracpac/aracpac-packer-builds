@@ -87,13 +87,11 @@
         local_users: "{{ server_users }}"
         local_commands:
           - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles"}
-          - {command: "bash -ilc 'rm ~.profile'", removes: "~/.profile"}
       shell: "{{ item[1].command }}"
       args:
-        chdir: "{{ omit if item[1].chdir is not defined or item[1].chdir }}"
+        chdir: "{{ item[1].chdir }}"
         executable: "/bin/bash"
-        creates: "{{ omit if item[1].creates is not defined or item[1].creates }}"
-        removes: "{{ omit if item[1].removes is not defined or item[1].removes }}"
+        creates: "{{ item[1].creates }}"
         warn: "false"
       become: "true"
       become_user: "{{ item[0].user }}"
@@ -244,8 +242,8 @@
         local_users: "{{ server_users }}"
         local_commands:
           - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
-          - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bash_exports'
-          - 'echo -e "eval \"\$(rbenv init - bash)\"" >> ~/.bash_profile'
+          - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bashrc'
+          - 'echo -e "\neval \"\$(rbenv init -)\"\n" >> ~/.bashrc'
           - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
           - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
           - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
@@ -263,9 +261,12 @@
         local_users: "{{ server_users }}"
         local_commands:
           - {command: "curl --silent --location https://sh.rustup.rs | bash -s -- -y",
-             creates: "$HOME/.cargo"}
+             creates: "~/.cargo"}
           - {command: "bash -ilc 'cargo install {{ cargo_packages | join(' ') }}'",
-             creates: "$HOME/.cargo/bin/{{ cargo_packages | last }}"}
+             creates: "~/.cargo/bin/{{ cargo_packages | last }}"}
+          - {command: "bash -ilc 'mkdir -p ~/.local/share/bash-completion/completions/rustup && \
+                       rustup completions bash > ~/.local/share/bash-completion/completions/rustup'",
+             creates: "~/.local/share/bash-completion/completions/rustup"}
           - {command: "curl --silent --location https://get.sdkman.io | bash",
              creates: "~/.sdkman/bin/sdkman-init.sh"}
           - {command: "bash -ilc 'sdk install springboot'",
@@ -280,12 +281,6 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
-    - name: "symlink cargo diff and dircolor binaries"
-      file:
-        src: "/home/{{ server_users[0] }}/.cargo/bin/{{ item }}"
-        dest: "/usr/local/bin/{{ item }}"
-        state: "link"
-      loop: "{{ cargo_packages }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -422,13 +417,25 @@
     - name: "add some environmental variables and update PATH"
       vars:
         local_paths:
-          - "export PATH=$HOME/.composer/vendor/bin/:$PATH"
-          - "export PATH=$HOME/.local/bin/:$PATH"
           - "export PATH=$JAVA_HOME/bin:$PATH"
+          - "export PATH=~/.cargo/bin/:$PATH"
+          - "export PATH=~/.composer/vendor/bin/:$PATH"
+          - "export PATH=~/.local/bin/:$PATH"
       lineinfile:
-        path: "~/.bash_profile"
+        path: "~/.bash_exports"
         state: "present"
         line: "{{ item[1] }}"
+      become: "true"
+      become_user: "{{ item[0].user }}"
+      loop: "{{ server_users | product(local_paths) | list }}"
+    - name: "remove cruft added by installers"
+      vars:
+        local_paths:
+          - { path: "~/.bash_profile", regexp: '. "$HOME/.cargo/env"', replace: "" }
+      lineinfile:
+        regexp: "{{ item[1].regexp }}"
+        replace: "{{ item[1].replace }}"
+        path: "{{ item[1].path }}"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ server_users | product(local_paths) | list }}"
