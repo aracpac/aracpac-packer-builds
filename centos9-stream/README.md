@@ -16,24 +16,19 @@ made specifically for this box.
 
 ## Stack summary:
 
-* Apache 2.4.51
-* dotnet 6.0.104
+* Apache 2.4.53
+* dotnet 6.0.108
 * Java 8 / 11 / 17
-* Linux 5.14.0-101
-* MongoDB 6
-* MySQL Ver 15.1 Distrib 10.5.13-MariaDB
-* Node 16.15.1 via NVM
-* PHP 8.1.6
-* PostgreSQL 14.3 and PostGIS 3.1
+* Linux 5.14.0-160
+* MongoDB 6.0.1
+* MySQL Ver 15.1 Distrib 10.5.16-MariaD
+* Node 16.17.0 via NVM
+* PHP 8.1.10
+* PostgreSQL 14.5 and PostGIS 3.3
 * Python 3.9.10
 * Ruby 3.1.2p20 via RVM
-* Varnish 6.6.2
-* Xdebug 3.1.4
-
-## Differences compared to the CentOS Stream 8 build
-
-* No PostGIS (it hasn't been added to the PostgreSQL CentOS 9 repo yet and has dependencies that need to be built from source).
-* No MongoDB ([building from sources requires 600GB storage](https://github.com/mongodb/mongo/blob/master/docs/building.md)).
+* Varnish 6.6.2 (with VMODs)
+* Xdebug 3.1.5
 
 ## 5 minute quickstart
 

@@ -124,9 +124,9 @@
     - "geerlingguy.repo-remi"
   pre_tasks:
     - name: "install mongo repo"
-      shell: 'echo -e "[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc" > /etc/yum.repos.d/mongodb-org-5.0.repo'
+      shell: 'echo -e "[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/6.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc" > /etc/yum.repos.d/mongodb-org-6.0.repo'
       args:
-        creates: "/etc/yum.repos.d/mongodb-org-5.0.repo"
+        creates: "/etc/yum.repos.d/mongodb-org-6.0.repo"
     - name: "installing packages via installers"
       shell: "{{ item.command }}"
       args:
@@ -348,7 +348,7 @@
     - name: "installing PostGIS (requires PostgreSQL to be installed first)"
       dnf:
         name:
-          - "postgis31_14"
+          - "postgis33_14"
     - name: "create xdebug log file"
       file:
         mode: "0777"
@@ -387,7 +387,7 @@
       git:
         dest: "/tmp/vmods"
         repo: "https://github.com/varnish/varnish-modules.git"
-        version: "6.6"
+        version: "{{ varnish_version }}"
       when: "varnish_build_vmods"
     - name: "bootstrap the source"
       args:
