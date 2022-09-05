@@ -20,14 +20,14 @@ made specifically for this box.
 * dotnet 6.0.108
 * Java 8 / 11 / 17
 * Linux 5.15.0-47-generic
-* MongoDB 6
+* MongoDB 6.0.1
 * MySQL 8.0.30
 * Node 16.17.0 via NVM
 * PHP 8.1.9
-* PostgreSQL 14.5 and PostGIS 3.3
+* PostgreSQL 14.5 and PostGIS 3.2
 * Python 3.10.4
 * Ruby 3.1.2p20 via RVM
-* Varnish 7.1.0
+* Varnish 7.1.1 (with VMODs)
 * Xdebug 3.1.5
 
 ## 5 minute quickstart

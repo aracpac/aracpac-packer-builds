@@ -85,6 +85,14 @@
         repo: "https://github.com/aracpac/aracpac-dotfiles.git"
         dest: "/home/{{ item.user }}/.dotfiles"
       loop: "{{ server_users }}"
+    - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
+      become: "yes"
+      become_user: "{{ item.user }}"
+      replace:
+        path: "~/.bashrc"
+        regexp: 'check_for_userspace_commands'
+        replace: '# check_for_userspace_commands'
+      loop: "{{ server_users }}"
     - name: "configuring dotfiles"
       vars:
         local_users: "{{ server_users }}"
@@ -99,14 +107,6 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
-    - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
-      become: "yes"
-      become_user: "{{ item.user }}"
-      replace:
-        path: "~/.bashrc"
-        regexp: 'check_for_userspace_commands'
-        replace: '# check_for_userspace_commands'
-      loop: "{{ server_users }}"
 ########################################################################################################################
 
 ########################################################################################################################

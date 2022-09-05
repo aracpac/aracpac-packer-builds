@@ -82,6 +82,14 @@
         repo: "https://github.com/aracpac/aracpac-dotfiles.git"
         dest: "/home/{{ item.user }}/.dotfiles"
       loop: "{{ server_users }}"
+    - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
+      become: "yes"
+      become_user: "{{ item.user }}"
+      replace:
+        path: "~/.bashrc"
+        regexp: 'check_for_userspace_commands'
+        replace: '# check_for_userspace_commands'
+      loop: "{{ server_users }}"
     - name: "configuring dotfiles"
       vars:
         local_users: "{{ server_users }}"
@@ -96,14 +104,6 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
-    - name: "don't check for userspace commands in the VM since alacritty is unnecessary in that context"
-      become: "yes"
-      become_user: "{{ item.user }}"
-      replace:
-        path: "~/.bashrc"
-        regexp: 'check_for_userspace_commands'
-        replace: '# check_for_userspace_commands'
-      loop: "{{ server_users }}"
 ########################################################################################################################
 
 ########################################################################################################################
@@ -130,6 +130,11 @@
              apt update -y'
       args:
         creates: "/etc/apt/sources.list.d/mongodb-org-6.0.list"
+    - name: "Need old libssl until official Mongo support https://jira.mongodb.org/browse/SERVER-62300"
+      apt:
+        deb: "{{ item }}"
+      loop:
+        - "http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.20_amd64.deb"
     - name: "installing packages via installers"
       shell: "{{ item.command }}"
       args:
