@@ -439,14 +439,22 @@
     - name: "remove cruft added by installers"
       vars:
         local_paths:
-          - { path: "~/.bash_profile", regexp: '. "$HOME/.cargo/env"', replace: "" }
-      replace:
-        regexp: "{{ item[1].regexp }}"
-        replace: "{{ item[1].replace }}"
+          - { path: "~/.bash_profile", regexp: '. "\$HOME/.cargo/env"', state: "absent" }
+          - { path: "~/.bashrc", regexp: 'umask 0002', state: "present" }
+      lineinfile:
         path: "{{ item[1].path }}"
+        regexp: "{{ item[1].regexp }}"
+        state: "{{ item[1].state }}"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ server_users | product(local_paths) | list }}"
+    - name: "remove cruft added by installers"
+      lineinfile:
+        path: "{{ item.path }}"
+        regexp: "{{ item.regexp }}"
+        state: "{{ item.state }}"
+      loop:
+        - {path: "/etc/java/maven.conf", regexp: 'JAVA_HOME=/usr/lib/jvm/java-11-openjdk', state: "absent"}
 ########################################################################################################################
 
 ########################################################################################################################
