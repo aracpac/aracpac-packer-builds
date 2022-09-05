@@ -436,14 +436,15 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ server_users | product(local_paths) | list }}"
-    - name: "remove cruft added by installers"
+    - name: "remove user cruft added by installers"
       vars:
         local_paths:
           - { path: "~/.bash_profile", regexp: '. "\$HOME/.cargo/env"', state: "absent" }
-          - { path: "~/.bashrc", regexp: 'umask 0002', state: "present" }
+          - { path: "~/.bashrc", line: 'umask 0002', state: "present" }
       lineinfile:
+        line: "{{ omit if item[1].line is not defined else item[1].line }}"
         path: "{{ item[1].path }}"
-        regexp: "{{ item[1].regexp }}"
+        regexp: "{{ omit if item[1].regexp is not defined else item[1].regexp }}"
         state: "{{ item[1].state }}"
       become: "true"
       become_user: "{{ item[0].user }}"

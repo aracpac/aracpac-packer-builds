@@ -1,6 +1,6 @@
 ## Full Stack Web Development Environment
 
-This CentOS 8 Stream virtual machine is preconfigured with support for a variety of full stack web development
+This CentOS 9 Stream virtual machine is preconfigured with support for a variety of full stack web development
 frameworks, including:
 
 * ✅ LAMP/LAPP: Laravel / Symfony / CakePHP / CodeIgnitor
@@ -11,7 +11,7 @@ frameworks, including:
 * ✅ ASP.Net
 
 Download a
-turbocharged [Vagrantfile](https://raw.githubusercontent.com/aracpac/aracpac-vagrantfiles/v1.4.1/centos8-stream/Vagrantfile)
+turbocharged [Vagrantfile](https://raw.githubusercontent.com/aracpac/aracpac-vagrantfiles/v2.1.0/centos9-stream/Vagrantfile)
 made specifically for this box.
 
 ## Stack summary:
@@ -20,10 +20,11 @@ made specifically for this box.
 * dotnet 6.0.104
 * Java 8 / 11 / 17
 * Linux 5.14.0-101
+* MongoDB 6
 * MySQL Ver 15.1 Distrib 10.5.13-MariaDB
 * Node 16.15.1 via NVM
 * PHP 8.1.6
-* PostgreSQL 14.3
+* PostgreSQL 14.3 and PostGIS 3.1
 * Python 3.9.10
 * Ruby 3.1.2p20 via RVM
 * Varnish 6.6.2
@@ -261,12 +262,11 @@ Finally, use a web browser on your host machine and review your caught messages 
 * `vagrant` user with password `vagrant`, passwordless `sudo`, and an entry for the vagrant insecure key
   in `~/.ssh/authorized_keys`
 * `apache` listening on port `80` and `443` and serving from `/var/www`
-* `java` 8 / 11 / 16 JDKs and JREs (with 11 set as the default)
+* `java` 8 / 11 / 17 JDKs and JREs (with 17 set as the default)
 * `mysql` listening on port `3306` and with `root` password `root`
-* `postgresql` listening on port `5432` and with `vagrant` password `vagrant`
+* `mongodb` configured to listen on `27017` but disabled by default
+* `postgresql` listening on port `5432` and with `vagrant` password `vagrant`, with `postgis`
 * `php-xdebug` installed and available on port `9003` but disabled by default
-* JetBrains `projector` installed, with PHPStorm installed as a service (`projector_phpstorm`) on port `9999` but
-  disabled by default
 * `varnish` configured to listen on `8080` but disabled by default
 * `nginx` installed but disabled by default
 * `nfsd` installed and configured with the following
@@ -288,7 +288,6 @@ Finally, use a web browser on your host machine and review your caught messages 
 * `acl`
 * `atop`
 * `bash-completion`
-* `byobu`
 * `composer`
 * `curl`
 * `docker-ce`
@@ -313,6 +312,7 @@ Finally, use a web browser on your host machine and review your caught messages 
 * `subversion`
 * `supervisor`
 * `symfony`
+* `tmux`
 * `tree`
 * `unzip`
 * `vim`
@@ -326,7 +326,6 @@ Finally, use a web browser on your host machine and review your caught messages 
 * [@angular/cli](https://angular.io/cli)
 * [@vue/cli](https://cli.vuejs.org/)
 * [create-react-app](https://create-react-app.dev/)
-* [diff-so-fancy](https://www.npmjs.com/package/diff-so-fancy)
 * [ember-cli](https://cli.emberjs.com/release/)
 * [express-generator](https://expressjs.com/en/starter/generator.html)
 * [node-sass](https://www.npmjs.com/package/node-sass)
@@ -346,13 +345,3 @@ Finally, use a web browser on your host machine and review your caught messages 
 * [bundler](https://bundler.io/)
 * [mailcatcher](https://mailcatcher.me/)
 * [rails](https://rubyonrails.org/)
-
-## VIM addons:
-
-* [eunuch](https://github.com/tpope/vim-eunuch)
-* [gitgutter](https://github.com/airblade/vim-gitgutter)
-* [nerdtree](https://github.com/scrooloose/nerdtree)
-* [papercolor-theme](https://github.com/NLKNguyen/papercolor-theme)
-* [polyglot](https://github.com/sheerun/vim-polyglot)
-* [powerline](https://github.com/powerline/powerline)
-* [vundle](https://github.com/VundleVim/Vundle.vim)
