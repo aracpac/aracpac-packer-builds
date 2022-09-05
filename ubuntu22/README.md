@@ -34,8 +34,8 @@ made specifically for this box.
 
 The quickstart assumes you've:
 
-1. already installed [vagrant](https://www.vagrantup.com/docs/installation/) and
-   [VirtualBox](https://www.virtualbox.org/wiki/Downloads) (if you need help with this step, navigate to the AracPac
+1. already installed [vagrant](https://www.vagrantup.com/docs/installation/),
+   [VirtualBox](https://www.virtualbox.org/wiki/Downloads), and the `vagrant-hostmanager` plugin (if you need help with this step, navigate to the AracPac
    [Vagrantfile repository](https://github.com/aracpac/aracpac-vagrantfiles) and checkout the __Beginner's Guide__
    section in the README)
 2. downloaded
@@ -65,15 +65,15 @@ machine. Follow the prompts in your browser to trust the certificate and proceed
 ✅ Symfony ( https://dev.local/ )
 
 ```bash
-symfony new . --full
+symfony new . --webapp
 # install apache support (be sure to answer 'y' when prompted to run the recipe)
-composer require symfony/apache-pack
+composer require symfony/apache-pack symfony/orm-pack
 # update the default vhost to match symfony's file structure
 sudo sed -i -e 's/var\/www.*$/var\/www\/public/g' /etc/apache2/sites-enabled/vhosts.conf
 # restart apache2 to reload the vhost
 sudo systemctl restart apache2
 # create a local .env override and add the local machine's database information
-cat .env | sed -e 's/symfony:ChangeMe/vagrant:vagrant/g' > .env.local
+sed -i -e 's/app:!ChangeMe!/vagrant:vagrant/g' .env
 # create the database
 bin/console doctrine:database:create --if-not-exists --no-interaction
 ```
@@ -95,7 +95,7 @@ sudo systemctl restart apache2
 ✅ CakePHP ( https://dev.local/ )
 
 ```bash
-composer create-project cakephp/app .
+composer create-project --prefer-dist cakephp/app .
 # update the default vhost to match CakePHP's file structure
 sudo sed -i -e 's/var\/www.*$/var\/www/g' /etc/apache2/sites-enabled/vhosts.conf
 # restart apache2 to reload the vhost
@@ -167,7 +167,7 @@ serve -s public
 ✅ Java Spring ( http://dev.local:8080/ )
 
 ```bash
-spring init --dependencies=web ./
+spring init --dependencies=web -j=17 ./
 mvn spring-boot:run
 ```
 

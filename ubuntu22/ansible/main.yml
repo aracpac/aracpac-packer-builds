@@ -123,13 +123,6 @@
         question: "postfix/main_mailer_type"
         value: "'No configuration'"
         vtype: "string"
-    - name: "install Microsoft repo"
-      shell: "wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O \
-                    packages-microsoft-prod.deb && \
-                    dpkg -i packages-microsoft-prod.deb && \
-                    rm packages-microsoft-prod.deb"
-      args:
-        creates: "/etc/apt/sources.list.d/microsoft-prod.list"
     - name: "install mongo repo"
       shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add - && \
                     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | \
@@ -431,11 +424,11 @@
     - name: "remove cruft added by installers"
       vars:
         local_paths:
-          - { path: "~/.bash_profile", regexp: '. "$HOME/.cargo/env"', replace: "" }
-      replace:
-        regexp: "{{ item[1].regexp }}"
-        replace: "{{ item[1].replace }}"
+          - { path: "~/.bash_profile", regexp: '. "\$HOME/.cargo/env"', state: "absent" }
+      lineinfile:
         path: "{{ item[1].path }}"
+        regexp: "{{ item[1].regexp }}"
+        state: "{{ item[1].state }}"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ server_users | product(local_paths) | list }}"
