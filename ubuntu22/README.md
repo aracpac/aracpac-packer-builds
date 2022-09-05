@@ -66,8 +66,8 @@ machine. Follow the prompts in your browser to trust the certificate and proceed
 
 ```bash
 symfony new . --webapp
-# install apache support (be sure to answer 'y' when prompted to run the recipe)
-composer require symfony/apache-pack symfony/orm-pack
+# install apache and doctrine support (be sure to answer 'y' when prompted to run the recipe)
+composer require symfony/apache-pack symfony/orm-pack:^2.1
 # update the default vhost to match symfony's file structure
 sudo sed -i -e 's/var\/www.*$/var\/www\/public/g' /etc/apache2/sites-enabled/vhosts.conf
 # restart apache2 to reload the vhost
