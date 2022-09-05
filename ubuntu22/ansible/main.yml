@@ -86,7 +86,7 @@
       vars:
         local_users: "{{ server_users }}"
         local_commands:
-          - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles"}
+          - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux/plugins/tmux-themepack", chdir: "~/.dotfiles"}
       shell: "{{ item[1].command }}"
       args:
         chdir: "{{ item[1].chdir }}"
@@ -124,17 +124,12 @@
         value: "'No configuration'"
         vtype: "string"
     - name: "install mongo repo"
-      shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add - && \
-                    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | \
-                    tee /etc/apt/sources.list.d/mongodb-org-5.0.list && \
-                    apt update -y'
+      shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - && \
+             echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | \
+             tee /etc/apt/sources.list.d/mongodb-org-6.0.list && \
+             apt update -y'
       args:
-        creates: "/etc/apt/sources.list.d/mongodb-org-5.0.list"
-    - name: "Need old libssl until official Mongo support https://jira.mongodb.org/browse/SERVER-62300"
-      apt:
-        deb: "{{ item }}"
-      loop:
-        - "http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.20_amd64.deb"
+        creates: "/etc/apt/sources.list.d/mongodb-org-6.0.list"
     - name: "installing packages via installers"
       shell: "{{ item.command }}"
       args:
@@ -372,7 +367,7 @@
       git:
         dest: "/tmp/vmods"
         repo: "https://github.com/varnish/varnish-modules.git"
-        version: "7.1"
+        version: "{{ varnish_version }}"
       when: "varnish_build_vmods"
     - name: "bootstrap the source"
       args:

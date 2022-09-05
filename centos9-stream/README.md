@@ -27,7 +27,7 @@ made specifically for this box.
 * PostgreSQL 14.5 and PostGIS 3.3
 * Python 3.9.10
 * Ruby 3.1.2p20 via RVM
-* Varnish 6.6.2 (with VMODs)
+* Varnish 7.1.1 (with VMODs)
 * Xdebug 3.1.5
 
 ## 5 minute quickstart

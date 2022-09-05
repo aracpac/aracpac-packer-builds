@@ -2,7 +2,7 @@
 # forked from https://github.com/chef/bento
 
 # install deps
-dnf -y install tar patch;
+dnf -y install bzip2 gcc kernel-devel kernel-headers make patch perl tar;
 
 # set a default HOME_DIR environment variable if not set
 HOME_DIR="/root";
@@ -11,7 +11,7 @@ VER="`cat $HOME_DIR/.vbox_version`";
 ISO="VBoxGuestAdditions_$VER.iso";
 mkdir -p /tmp/vbox;
 mount -o loop $HOME_DIR/$ISO /tmp/vbox;
-sh /tmp/vbox/VBoxLinuxAdditions.run
+sh /tmp/vbox/VBoxLinuxAdditions.run --nox11;
 umount /tmp/vbox;
 rm -rf /tmp/vbox;
 rm -f $HOME_DIR/*.iso;
