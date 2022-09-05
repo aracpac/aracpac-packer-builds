@@ -89,7 +89,7 @@
       vars:
         local_users: "{{ server_users }}"
         local_commands:
-          - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux", chdir: "~/.dotfiles"}
+          - {command: "bash -ilc '~/.dotfiles/symlinkctl enable'", creates: "~/.tmux/plugins/tmux-themepack", chdir: "~/.dotfiles"}
       shell: "{{ item[1].command }}"
       args:
         chdir: "{{ item[1].chdir }}"
