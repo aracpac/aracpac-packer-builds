@@ -89,7 +89,7 @@
       become: "yes"
       become_user: "{{ item.user }}"
       replace:
-        path: "~/.bashrc"
+        path: "~/.dotfiles/.bashrc"
         regexp: 'check_for_userspace_commands'
         replace: '# check_for_userspace_commands'
       loop: "{{ server_users }}"

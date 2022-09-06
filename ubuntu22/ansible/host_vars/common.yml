@@ -110,6 +110,7 @@ php_opcache_save_comments: "1"
 php_packages:
     - "php"
     - "php-apcu"
+    - "php-bcmath"
     - "php-cli"
     - "php-common"
     - "php-curl"
