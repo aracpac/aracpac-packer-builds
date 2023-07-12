@@ -124,17 +124,12 @@
         value: "'No configuration'"
         vtype: "string"
     - name: "install mongo repo"
-      shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - && \
-             echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | \
+      shell: 'curl --silent --location https://www.mongodb.org/static/pgp/server-6.0.asc | gpg --dearmor | tee /usr/share/keyrings/mongodb.gpg > /dev/null && \
+             echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | \
              tee /etc/apt/sources.list.d/mongodb-org-6.0.list && \
              apt update -y'
       args:
         creates: "/etc/apt/sources.list.d/mongodb-org-6.0.list"
-    - name: "Need old libssl until official Mongo support https://jira.mongodb.org/browse/SERVER-62300"
-      apt:
-        deb: "{{ item }}"
-      loop:
-        - "http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.20_amd64.deb"
     - name: "installing packages via installers"
       shell: "{{ item.command }}"
       args:
@@ -144,7 +139,7 @@
       loop:
         - {command: "curl --silent --location https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh | bash",
            creates: "/etc/apt/sources.list.d/symfony-stable.list"}
-  tasks: # See the default Ubuntu 20 package list at https://releases.ubuntu.com/22.04/ubuntu-22.04.1-live-server-amd64.manifest
+  tasks: # See the default Ubuntu 20 package list at https://releases.ubuntu.com/22.04/ubuntu-22.04.2-live-server-amd64.manifest
     - name: "installing packages from package manager"
       apt:
         name:
@@ -159,14 +154,18 @@
           - "byobu"
           - "clang"
           - "cmake"
-          - "dotnet-sdk-6.0"
-          - "dotnet-runtime-6.0"
+          - "dotnet-sdk-7.0"
+          - "dotnet-runtime-7.0"
           - "firewalld"
           - "golang"
           - "imagemagick"
           - "iotop"
           - "libmcrypt-dev"
+          - "libgdbm-dev"
+          - "libncurses5-dev"
+          - "libreadline-dev"
           - "libssl-dev"
+          - "libyaml-dev"
           - "libsqlite3-dev"
           - "maven"
           - "mongodb-org"
@@ -179,6 +178,7 @@
           - "python3"
           - "python3-venv"
           - "pv"
+          - "rustc"
           - "screen"
           - "sendmail-cf"
           - "sqlite3"
@@ -230,25 +230,6 @@
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
-    - name: "installing rbenv and ruby gems for all users"
-      vars:
-        local_users: "{{ server_users }}"
-        local_commands:
-          - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
-          - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bashrc'
-          - 'echo -e "\neval \"\$(rbenv init -)\"\n" >> ~/.bashrc'
-          - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.1' | head -n 1)'"
-          - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.1' | head -n 1)'"
-          - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
-          - "touch ~/.rbenv/.installed"
-      shell: "{{ item[1] }}"
-      args:
-        creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.rbenv/.installed"
-        executable: "/bin/bash"
-        warn: "false"
-      become: "true"
-      become_user: "{{ item[0].user }}"
-      loop: "{{ local_users | product(local_commands) | list }}"
     - name: "installing per-user packages via installers"
       vars:
         local_users: "{{ server_users }}"
@@ -269,6 +250,25 @@
       shell: "{{ item[1].command }}"
       args:
         creates: "{{ item[1].creates }}"
+        executable: "/bin/bash"
+        warn: "false"
+      become: "true"
+      become_user: "{{ item[0].user }}"
+      loop: "{{ local_users | product(local_commands) | list }}"
+    - name: "installing rbenv and ruby gems for all users"
+      vars:
+        local_users: "{{ server_users }}"
+        local_commands:
+          - "curl --silent --location https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash"
+          - 'echo -e "\nexport PATH=~/.rbenv/bin:\$PATH\n" >> ~/.bashrc'
+          - 'echo -e "\neval \"\$(rbenv init -)\"\n" >> ~/.bashrc'
+          - "bash -ilc 'rbenv install -f $(rbenv install -l | grep '^3.2' | head -n 1)'"
+          - "bash -ilc 'rbenv global $(rbenv install -l | grep '^3.2' | head -n 1)'"
+          - "bash -ilc 'gem install {{ ruby_packages | join(' ') }}'"
+          - "touch ~/.rbenv/.installed"
+      shell: "{{ item[1] }}"
+      args:
+        creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.rbenv/.installed"
         executable: "/bin/bash"
         warn: "false"
       become: "true"
@@ -321,24 +321,24 @@
     - "geerlingguy.composer"
     - "geerlingguy.nfs"
   tasks:
-    - name: "find java 17 full path"
-      shell: "update-alternatives --list java | grep java-17-openjdk-amd64"
-      register: "java_17_openjdk_binary"
+    - name: "find java {{ java_primary_version }} full path"
+      shell: "update-alternatives --list java | grep java-{{ java_primary_version }}-openjdk-amd64"
+      register: "java_openjdk_binary"
       run_once: "true"
     - set_fact:
-        java_17_openjdk_binary: "{{ java_17_openjdk_binary.stdout }}"
-    - name: "Set Java 17 as default"
+        java_openjdk_binary: "{{ java_openjdk_binary.stdout }}"
+    - name: "Set Java {{ java_primary_version }} as default"
       alternatives:
         name: "java"
-        path: "{{ java_17_openjdk_binary }}"
-    - name: "Set Javac 17 as default"
+        path: "{{ java_openjdk_binary }}"
+    - name: "Set Javac {{ java_primary_version }} as default"
       alternatives:
         name: "javac"
-        path: "{{ java_17_openjdk_binary }}c"
+        path: "{{ java_openjdk_binary }}c"
     - name: "installing PostGIS (requires PostgreSQL to be installed first)"
       apt:
         name:
-          - "postgresql-14-postgis-3"
+          - "postgresql-{{ postgresql_version }}-postgis-3"
     - name: "update default apache vhost"
       replace:
         path: "/etc/apache2/apache2.conf"

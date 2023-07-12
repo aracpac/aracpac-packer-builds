@@ -16,7 +16,7 @@ apache_mods_enabled:
     - "ssl"
 apache_mods_disabled:
     - "mpm_prefork"
-    - "php8.1"
+    - "php{{ php_version }}"
 apache_packages_state: "latest"
 apache_remove_default_vhost: "true"
 apache_state: "stopped"
@@ -27,7 +27,7 @@ apache_vhosts:
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.1-fpm.sock|fcgi://localhost${documentroot}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.2-fpm.sock|fcgi://localhost${documentroot}"
 apache_vhosts_ssl:
     -   servername: "null"
         serveralias: "*"
@@ -37,7 +37,7 @@ apache_vhosts_ssl:
         extra_parameters: |
             RewriteCond %{HTTP_HOST} !^www\. [NC]
             RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.1-fpm.sock|fcgi://localhost${documentroot}"
+            ProxyPassMatch ^/(.*\.php(/.*)?)$ "unix:/run/php/php8.2-fpm.sock|fcgi://localhost${documentroot}"
 apache_global_vhost_settings: |
     DirectoryIndex index.php index.html
     Define documentroot {{ server_document_root }}
@@ -55,10 +55,10 @@ java_packages:
     - "openjdk-8-jre"
     - "openjdk-11-jre"
     - "openjdk-11-jdk"
-    - "openjdk-17-jre"
-    - "openjdk-17-jdk"
+    - "openjdk-19-jre"
+    - "openjdk-19-jdk"
 java_home: '$(readlink -f /usr/bin/java | sed "s:/bin/java::")'
-
+java_primary_version: "19"
 # MySQL settings #######################################################################################################
 mysql_user_home: "/root"
 mysql_user_name: "root"
@@ -74,7 +74,7 @@ nfs_exports:
     - "# see https://linux.die.net/man/5/exports"
     - "# *               - anyone on the network can access this share"
     - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-    - "{{ server_document_root }}    *(all_squash,anonuid={{ getent_passwd.vagrant[1] }},anongid={{ getent_group.vagrant[1] }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
+    - "{{ server_document_root }}    *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
 # nginx settings #######################################################################################################
 nginx_remove_default_vhost: "true"
@@ -141,7 +141,7 @@ php_session_gc_maxlifetime: "2592000"
 php_session_gc_probability: "1"
 php_upload_max_filesize: "50M"
 php_variables_order: "EGPCS"
-php_version: "8.1"
+php_version: "8.2"
 php_webserver_daemon: "apache2"
 
 # PGSQL settings #######################################################################################################
@@ -152,7 +152,15 @@ postgresql_users:
         password: "vagrant"
         priv: "ALL"
         role_attr_flags: "login,superuser"
-
+postgresql_version: "15"
+postgresql_data_dir: "/var/lib/postgresql/{{ postgresql_version }}/main"
+postgresql_bin_path: "/usr/lib/postgresql/{{ postgresql_version }}/bin"
+postgresql_config_path: "/etc/postgresql/{{ postgresql_version }}/main"
+postgresql_daemon: "postgresql"
+postgresql_packages:
+    - "postgresql-{{ postgresql_version }}"
+    - "postgresql-contrib"
+    - "libpq-dev"
 # Python settings ######################################################################################################
 pip_packages:
     - "Django"
@@ -181,4 +189,4 @@ server_users_and_root_user: "{{ server_users + [{ \"user\": \"root\" }] }}"
 varnish_default_backend_host: "127.0.0.1"
 varnish_default_backend_port: "80"
 varnish_listen_port: "8080"
-varnish_version: "7.1"
+varnish_version: "7.3"

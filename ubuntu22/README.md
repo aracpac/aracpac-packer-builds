@@ -1,6 +1,6 @@
 ## Full Stack Web Development Environment
 
-This Ubuntu 22.04.1 LTS virtual machine is preconfigured with support for a variety of full stack web development
+This Ubuntu 22.04.2 LTS virtual machine is preconfigured with support for a variety of full stack web development
 frameworks, including:
 
 * ✅ LAMP/LAPP: Laravel / Symfony / CakePHP / CodeIgnitor
@@ -11,24 +11,24 @@ frameworks, including:
 * ✅ ASP.Net
 
 Download a
-turbocharged [Vagrantfile](https://raw.githubusercontent.com/aracpac/aracpac-vagrantfiles/v2.1.0/ubuntu22/Vagrantfile)
+turbocharged [Vagrantfile](https://raw.githubusercontent.com/aracpac/aracpac-vagrantfiles/v2.2.0/ubuntu22/Vagrantfile)
 made specifically for this box.
 
 ## Stack summary:
 
 * Apache 2.4.52
-* dotnet 6.0.108
-* Java 8 / 11 / 17
-* Linux 5.15.0-47-generic
-* MongoDB 6.0.1
-* MySQL 8.0.30
-* Node 16.17.0 via NVM
-* PHP 8.1.9
-* PostgreSQL 14.5 and PostGIS 3.2
-* Python 3.10.4
-* Ruby 3.1.2p20 via RVM
-* Varnish 7.1.1 (with VMODs)
-* Xdebug 3.1.5
+* dotnet 7.0.109
+* Java 8 / 11 / 19
+* Linux 5.15.0-76-generic
+* MongoDB 6.0.8
+* MySQL 8.0.33
+* Node 18.16.1 via NVM
+* PHP 8.2.8
+* PostgreSQL 15.3 and PostGIS 3.3.3
+* Python 3.10.6
+* Ruby 3.2.2 via rbenv
+* Varnish 7.3.0 (with VMODs)
+* Xdebug 3.2.1
 
 ## 5 minute quickstart
 

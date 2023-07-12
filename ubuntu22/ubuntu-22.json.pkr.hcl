@@ -7,7 +7,7 @@ source "virtualbox-iso" "main" {
   guest_additions_path    = "VBoxGuestAdditions_{{ .Version }}.iso"
   guest_os_type           = "Ubuntu_64"
   hard_drive_interface    = "sata"
-  headless                = true
+  headless                = false
   http_directory          = "http"
   iso_checksum            = "${var.checksum_type}:${var.iso_checksum}"
   iso_urls                = ["iso/${var.iso_name}", "${var.mirror}/${var.mirror_directory}/${var.iso_name}"]
@@ -20,6 +20,7 @@ source "virtualbox-iso" "main" {
   ssh_timeout             = "10000s"
   ssh_username            = "root"
   virtualbox_version_file = ".vbox_version"
+  vboxmanage   = [["modifyvm", "{{.Name}}", "--nat-localhostreachable1", "on"]]
   vm_name                 = "aracpac-${var.image_name}-v${var.version}"
 }
 
@@ -67,7 +68,7 @@ build {
 
 variable "checksum_type" {
   type    = string
-  default = "sha256"
+  default = "file"
 }
 
 variable "image_name" {
@@ -77,22 +78,22 @@ variable "image_name" {
 
 variable "iso_checksum" {
   type    = string
-  default = "10f19c5b2b8d6db711582e0e27f5116296c34fe4b313ba45f9b201a5007056cb"
+  default = "https://releases.ubuntu.com/jammy/SHA256SUMS"
 }
 
 variable "iso_name" {
   type    = string
-  default = "ubuntu-22.04.1-live-server-amd64.iso"
+  default = "ubuntu-22.04.2-live-server-amd64.iso"
 }
 
 variable "mirror" {
   type    = string
-  default = "http://releases.ubuntu.com"
+  default = "https://releases.ubuntu.com"
 }
 
 variable "mirror_directory" {
   type    = string
-  default = "22.04"
+  default = "jammy"
 }
 
 variable "vb_cpus" {
@@ -112,5 +113,5 @@ variable "vb_memory" {
 
 variable "version" {
   type    = string
-  default = "2.1.0"
+  default = "2.2.0"
 }
