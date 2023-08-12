@@ -1,6 +1,11 @@
 # https://www.packer.io/docs/templates/hcl_templates/blocks/source
 source "virtualbox-iso" "main" {
-  boot_command            = [ " <wait>", " <wait>", " <wait>", " <wait>", " <wait>", "c", "<wait>", "set gfxpayload=keep", "<enter><wait>", "linux /casper/vmlinuz quiet <wait>", " autoinstall<wait>", " ds=nocloud-net<wait>", "\\;s=http://<wait>", "{{.HTTPIP}}<wait>", ":{{.HTTPPort}}/<wait>", " ---", "<enter><wait>", "initrd /casper/initrd<wait>", "<enter><wait>", "boot<enter><wait>" ]
+  boot_command            = [
+    " <wait>", " <wait>", " <wait>", " <wait>", " <wait>", "c", "<wait>", "set gfxpayload=keep", "<enter><wait>",
+    "linux /casper/vmlinuz quiet <wait>", " autoinstall<wait>", " ds=nocloud-net<wait>", "\\;s=http://<wait>",
+    "{{.HTTPIP}}<wait>", ":{{.HTTPPort}}/<wait>", " ---", "<enter><wait>", "initrd /casper/initrd<wait>",
+    "<enter><wait>", "boot<enter><wait>"
+  ]
   boot_wait               = "5s"
   cpus                    = "${var.vb_cpus}"
   disk_size               = "${var.vb_disk_size}"
@@ -20,7 +25,7 @@ source "virtualbox-iso" "main" {
   ssh_timeout             = "10000s"
   ssh_username            = "root"
   virtualbox_version_file = ".vbox_version"
-  vboxmanage   = [["modifyvm", "{{.Name}}", "--nat-localhostreachable1", "on"]]
+  vboxmanage              = [["modifyvm", "{{.Name}}", "--nat-localhostreachable1", "on"]]
   vm_name                 = "aracpac-${var.image_name}-v${var.version}"
 }
 
@@ -41,7 +46,7 @@ build {
   }
 
   provisioner "shell" {
-    scripts           = ["scripts/ansible.sh", "scripts/sshd.sh", "scripts/networking.sh"]
+    scripts = ["scripts/ansible.sh", "scripts/sshd.sh", "scripts/networking.sh"]
   }
 
   provisioner "ansible-local" {
