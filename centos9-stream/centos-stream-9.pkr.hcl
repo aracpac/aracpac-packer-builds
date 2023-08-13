@@ -19,6 +19,7 @@ source "virtualbox-iso" "main" {
   ssh_port                = 22
   ssh_timeout             = "10000s"
   ssh_username            = "root"
+  vboxmanage              = [["modifyvm", "{{.Name}}", "--nat-localhostreachable1", "on"]]
   virtualbox_version_file = ".vbox_version"
   vm_name                 = "aracpac-${var.image_name}-v${var.version}"
 }
@@ -61,7 +62,7 @@ build {
 
 variable "checksum_type" {
   type    = string
-  default = "sha256"
+  default = "file"
 }
 
 variable "image_name" {
@@ -71,7 +72,7 @@ variable "image_name" {
 
 variable "iso_checksum" {
   type    = string
-  default = "a5ee89193b8c55ecdf6686cbc9db6a2e93060d7050595113f47fe9576caff272"
+  default = "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso.SHA256SUM"
 }
 
 variable "iso_name" {
@@ -106,5 +107,5 @@ variable "vb_memory" {
 
 variable "version" {
   type    = string
-  default = "2.1.0"
+  default = "2.2.0"
 }

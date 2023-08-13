@@ -103,7 +103,6 @@
         chdir: "{{ item[1].chdir }}"
         executable: "/bin/bash"
         creates: "{{ item[1].creates }}"
-        warn: "false"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
@@ -132,7 +131,6 @@
       args:
         creates: "{{ item.creates }}"
         executable: "/bin/bash"
-        warn: "false"
       loop:
         - {command: "curl --silent --location https://dl.cloudsmith.io/public/symfony/stable/setup.rpm.sh | bash",
            creates: "/etc/yum.repos.d/symfony-stable.repo"}
@@ -145,8 +143,8 @@
           - "bind-utils"
           - "clang"
           - "@Development tools"
-          - "dotnet-sdk-6.0"
-          - "dotnet-runtime-6.0"
+          - "dotnet-sdk-7.0"
+          - "dotnet-runtime-7.0"
           - "git"
           - "golang"
           - "htop"
@@ -195,7 +193,6 @@
       args:
         creates: "{{ item.creates }}"
         executable: "/bin/bash"
-        warn: "false"
       loop:
         - {"command": "curl --silent --output /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \ 
                                 chmod +x /usr/local/bin/wp",
@@ -212,7 +209,6 @@
       args:
         creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.nvm/.installed"
         executable: "/bin/bash"
-        warn: "false"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
@@ -231,7 +227,6 @@
       args:
         creates: "{{ '/home/' if 'root' != item[0].user else '/' }}{{ item[0].user }}/.rbenv/.installed"
         executable: "/bin/bash"
-        warn: "false"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
@@ -256,7 +251,6 @@
       args:
         creates: "{{ item[1].creates }}"
         executable: "/bin/bash"
-        warn: "false"
       become: "true"
       become_user: "{{ item[0].user }}"
       loop: "{{ local_users | product(local_commands) | list }}"
@@ -304,8 +298,6 @@
         state: "present"
         key: "{{ item }}"
       loop:
-        - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-13"
-        - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-14"
         - "https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-15"
     - name: "install the postgresql rhel repo"
       dnf:
@@ -329,22 +321,22 @@
     - "geerlingguy.composer"
     - "geerlingguy.nfs"
   tasks:
-    - name: "find java 17 full path"
-      shell: "update-alternatives --list | grep java_sdk_17_openjdk | awk '{print $3}'"
-      register: "java_17_openjdk_path"
+    - name: "find java {{ java_primary_version }} full path"
+      shell: "update-alternatives --list | grep jre_{{ java_primary_version }}_openjdk | awk '{print $3}'"
+      register: "java_openjdk_path"
       run_once: "true"
     - set_fact:
-        java_17_openjdk_path: "{{ java_17_openjdk_path.stdout }}"
-    - name: "Set Java 17 as default"
+        java_openjdk_path: "{{ java_openjdk_path.stdout }}"
+    - name: "Set Java {{ java_primary_version }} as default"
       alternatives:
         name: "java"
         link: "/usr/bin/java"
-        path: "{{ java_17_openjdk_path }}/bin/java"
-    - name: "Set Javac 17 as default"
+        path: "{{ java_openjdk_path }}/bin/java"
+    - name: "Set Javac {{ java_primary_version }} as default"
       alternatives:
         name: "javac"
         link: "/usr/bin/javac"
-        path: "{{ java_17_openjdk_path }}/bin/javac"
+        path: "{{ java_openjdk_path }}/bin/javac"
     - name: "installing PostGIS (requires PostgreSQL to be installed first)"
       dnf:
         name:

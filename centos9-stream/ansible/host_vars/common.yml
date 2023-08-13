@@ -17,7 +17,7 @@ apache_mods_enabled:
     - "ssl"
 apache_mods_disabled:
     - "mpm_prefork"
-    - "php8.1"
+    - "php{{ php_version }}"
 apache_packages_state: "latest"
 apache_remove_default_vhost: "true"
 apache_state: "stopped"
@@ -56,9 +56,10 @@ java_packages:
     - "java-1.8.0-openjdk-devel"
     - "java-11-openjdk"
     - "java-11-openjdk-devel"
-    - "java-17-openjdk"
-    - "java-17-openjdk-devel"
+    - "java-latest-openjdk"
+    - "java-latest-openjdk-devel"
 java_home: '$(readlink -f /usr/bin/java | sed "s:/bin/java::")'
+java_primary_version: "20"
 
 # MySQL settings #######################################################################################################
 mysql_user_home: "/root"
@@ -76,7 +77,7 @@ nfs_exports:
     - "# see https://linux.die.net/man/5/exports"
     - "# *               - anyone on the network can access this share"
     - "# all_squash      - all network access to the shared folder will be considered as having come from anonguid and anongid"
-    - "{{ server_document_root }}    *(all_squash,anonuid={{ getent_passwd.vagrant[1] }},anongid={{ getent_group.vagrant[1] }},async,crossmnt,insecure,nohide,fsid=9999,rw)"
+    - "{{ server_document_root }}    *(all_squash,anonuid=1000,anongid=1000,async,crossmnt,insecure,nohide,fsid=9999,rw)"
 
 # nginx settings #######################################################################################################
 nginx_remove_default_vhost: "true"
@@ -144,7 +145,7 @@ php_session_gc_maxlifetime: "2592000"
 php_session_gc_probability: "1"
 php_upload_max_filesize: "50M"
 php_variables_order: "EGPCS"
-php_version: "8.1"
+php_version: "8.2"
 php_webserver_daemon: "httpd"
 
 # PGSQL settings #######################################################################################################
@@ -155,6 +156,7 @@ postgresql_users:
         password: "vagrant"
         priv: "ALL"
         role_attr_flags: "login,superuser"
+postgresql_version: "15"
 
 # Python settings ######################################################################################################
 pip_packages:
@@ -187,7 +189,4 @@ server_users_and_root_user: "{{ server_users + [{ \"user\": \"root\" }] }}"
 varnish_default_backend_host: "127.0.0.1"
 varnish_default_backend_port: "80"
 varnish_listen_port: "8080"
-varnish_version: "7.1"
-# TODO: switch to native EL9 repos when they become available
-varnish_yum_repo_baseurl: https://packagecloud.io/varnishcache/{{ varnish_packagecloud_repo }}/el/8/$basearch
-
+varnish_version: "7.3"

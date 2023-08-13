@@ -16,19 +16,19 @@ made specifically for this box.
 
 ## Stack summary:
 
-* Apache 2.4.53
-* dotnet 6.0.108
-* Java 8 / 11 / 17
-* Linux 5.14.0-160
-* MongoDB 6.0.1
+* Apache 2.4.57
+* dotnet 7.0.109
+* Java 8 / 11 / 20
+* Linux 5.14.0-350
+* MongoDB 6.0.8
 * MySQL Ver 15.1 Distrib 10.5.16-MariaD
-* Node 16.17.0 via NVM
-* PHP 8.1.10
-* PostgreSQL 14.5 and PostGIS 3.3
-* Python 3.9.10
-* Ruby 3.1.2p20 via RVM
-* Varnish 7.1.1 (with VMODs)
-* Xdebug 3.1.5
+* Node 18.17.1 via NVM
+* PHP 8.2.9
+* PostgreSQL 13.11 and PostGIS 3.3
+* Python 3.9.17
+* Ruby 3.1.4p223 via RVM
+* Varnish 7.3.0 (with VMODs)
+* Xdebug 3.2.2
 
 ## 5 minute quickstart
 
@@ -167,7 +167,7 @@ serve -s public
 ✅ Java Spring ( http://dev.local:8080/ )
 
 ```bash
-spring init --dependencies=web -j=17 ./
+spring init --dependencies=web -j=20 ./
 mvn spring-boot:run
 ```
 
